@@ -32,4 +32,13 @@ Asked "what is Nebius Token Factory?" with no context, both models confidently d
 
 ## NemoClaw / OpenShell / Hermes
 
-Not started yet (phase 1, task 2).
+### Found while reading the docs, before installing
+
+- Nebius Token Factory isn't a built-in inference provider, even though Nebius co-runs this hackathon. It has to go through "Other OpenAI-compatible endpoint", which is listed as "Tested with limitations".
+- On WSL the installer offers an Express setup, and pressing Enter picks a local Ollama model. Someone who means to use a hosted provider can easily end up on local Ollama without noticing. I set `NEMOCLAW_NO_EXPRESS=1` to avoid it.
+- The docs contradict each other on public HTTPS custom endpoints. `reference/troubleshooting` says "DNS-backed HTTPS endpoint is not supported" can appear during custom-endpoint onboarding. The current onboarding code pins the hostname and accepts it. The fallback (`inference set` after onboarding with another provider) puts a 30-second total deadline on every upstream response.
+- The two pages that list accepted `NEMOCLAW_PREFERRED_API` values disagree. The compatible-endpoint page lists `openai-completions` and `openai-responses`. The commands reference says `completions` is the only value it honors.
+
+### Install log
+
+(Add each failure or workaround here as it happens: command, exact error, fix.)
