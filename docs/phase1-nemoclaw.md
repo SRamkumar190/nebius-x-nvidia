@@ -93,6 +93,27 @@ What to expect:
 
 If `nemohermes` isn't found, run `source ~/.bashrc` or open a new Ubuntu window. If the health check can't connect, run `nemohermes keeper recover` and try again.
 
+### If the installer reports an OpenShell gateway version mismatch
+
+This happens when a standalone OpenShell from apt is already installed. Its background gateway service runs a different version from the one NemoClaw pins. First check that the old gateway isn't managing anything you need:
+
+```bash
+dpkg -l | grep -i openshell
+/usr/bin/openshell sandbox list 2>/dev/null || echo "no old CLI"
+```
+
+Then remove it and run the install again:
+
+```bash
+systemctl --user stop openshell-gateway.service
+sudo apt remove openshell
+systemctl --user daemon-reload
+export NEMOCLAW_NO_EXPRESS=1
+curl -fsSL https://www.nvidia.com/nemoclaw.sh | NEMOCLAW_AGENT=hermes NEMOCLAW_SANDBOX_NAME=keeper bash
+```
+
+If onboarding then says `migration N was previously applied`, NemoClaw's older gateway has found the newer one's database. Run the stop/move commands it prints.
+
 ### If onboarding says "DNS-backed HTTPS endpoint is not supported"
 
 NemoClaw's docs contradict each other on this. The troubleshooting page says a custom endpoint with a public hostname "can" be rejected during onboarding. The current source code suggests Token Factory will be accepted. If you do get this error:

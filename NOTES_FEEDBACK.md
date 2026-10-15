@@ -42,3 +42,11 @@ Asked "what is Nebius Token Factory?" with no context, both models confidently d
 ### Install log
 
 (Add each failure or workaround here as it happens: command, exact error, fix.)
+
+1. 2026-10-15, first run of the Hermes installer on WSL2 (Ubuntu). Node 22.23.3 installed through nvm and the NemoHermes CLI built fine. Then the OpenShell step stopped with:
+
+   ```
+   [ERROR] OpenShell gateway version mismatch: NemoClaw installed 0.0.116 at /home/sidis/.local/bin/openshell-gateway, but the existing upstream user service uses 0.1.2 at /usr/bin/openshell-gateway. Align or remove the upstream OpenShell package (for apt installs: sudo apt remove openshell), then rerun the installer.
+   ```
+
+   Cause: a standalone OpenShell 0.1.2 from apt was already installed, with its own systemd user service. NemoClaw pins a different gateway build and won't run alongside it. The hackathon brief describes Keeper as running "inside NVIDIA OpenShell", so installing OpenShell first is a natural thing to do, and it leads straight to this error. Nothing in the NemoClaw quickstart warns you not to. Fix: `sudo apt remove openshell` and rerun. The error message itself said exactly what to do, which was good, but the rerun command in the troubleshooting docs leaves out `NEMOCLAW_AGENT=hermes`.
