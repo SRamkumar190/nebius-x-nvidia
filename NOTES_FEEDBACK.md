@@ -50,3 +50,7 @@ Asked "what is Nebius Token Factory?" with no context, both models confidently d
    ```
 
    Cause: a standalone OpenShell 0.1.2 from apt was already installed, with its own systemd user service. NemoClaw pins a different gateway build and won't run alongside it. The hackathon brief describes Keeper as running "inside NVIDIA OpenShell", so installing OpenShell first is a natural thing to do, and it leads straight to this error. Nothing in the NemoClaw quickstart warns you not to. Fix: `sudo apt remove openshell` and rerun. The error message itself said exactly what to do, which was good, but the rerun command in the troubleshooting docs leaves out `NEMOCLAW_AGENT=hermes`.
+
+2. 2026-10-15, after removing the apt OpenShell, the installer finished. `nemohermes` wasn't on PATH in the same shell until I ran `source ~/.bashrc` and `export PATH="$HOME/.local/bin:$PATH"`. Not a big deal, but the installer could print that line at the end.
+
+3. `nemohermes onboard` stopped at preflight with "Docker is not reachable". Docker Desktop was installed, but WSL couldn't reach it. Fix: start Docker Desktop, enable WSL integration for this distro, run `wsl --shutdown`, reopen, and check `docker info`. The error message listed exactly those steps, which helped a lot. The resume hint at the end says `nemohermes onboard --resume --name <sandbox>`, but at preflight no sandbox name has been chosen yet, so it's unclear which name to pass.
