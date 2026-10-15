@@ -4,10 +4,10 @@ from dataclasses import dataclass
 
 DEFAULT_BASE_URL = "https://api.tokenfactory.us-central1.nebius.com/v1/"
 
-# Ultra id taken from the Nebius token-factory-cookbook (note the capital N).
-# The catalog check in catalog.py fixes casing if Nebius lists it differently.
+# Ids as listed by GET /v1/models on 2026-10-15. Casing is not consistent
+# across the three, so copy them from the catalog rather than guessing.
 DEFAULT_MODELS = (
-    "nvidia/nemotron-3-nano-30b-a3b",
+    "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
     "nvidia/nemotron-3-super-120b-a12b",
     "nvidia/Nemotron-3-Ultra-550b-a55b",
 )
