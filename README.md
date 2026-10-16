@@ -2,6 +2,8 @@
 
 Personal AI track entry for the Nebius x NVIDIA Global AI Hackathon. Keeper is an always-on assistant meant to run as a Hermes agent inside NVIDIA OpenShell (via NemoClaw), with Nebius Token Factory doing inference.
 
+Phase 1 (feasibility) is done. The verdict is go: see `docs/phase1-report.md`. Install and test steps are in `docs/phase1-nemoclaw.md`, and build notes for the feedback submission are in `NOTES_FEEDBACK.md`.
+
 ## Phase 1: Token Factory probe
 
 `test_tokenfactory.py` lists the Token Factory catalog, then sends each Nemotron model one plain chat call and one call with a `get_weather` tool. It prints latency, token counts, and whether a real `tool_calls` entry came back.
