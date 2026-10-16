@@ -1,4 +1,14 @@
 __pycache__/
 *.pyc
 .venv/
+
+# Secrets and local state. Nothing in here belongs in a public repo.
 .env
+secrets/
+data/
+*.db
+*.sqlite
+*.sqlite3
+token*.json
+client_secret*.json
+credentials*.json

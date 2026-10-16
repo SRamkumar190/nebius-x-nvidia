@@ -1,32 +1,36 @@
 # Keeper
 
-Personal AI track entry for the Nebius x NVIDIA Global AI Hackathon. Keeper is an always-on assistant meant to run as a Hermes agent inside NVIDIA OpenShell (via NemoClaw), with Nebius Token Factory doing inference.
+Keeper is an always-on personal assistant for students, built for the Personal AI track of the Nebius x NVIDIA Global AI Hackathon. It reads a demo inbox and calendar, keeps an eye out for internships and hackathons, and reports back over Telegram. When you correct it, it writes the correction down as a skill so it doesn't make the same mistake twice.
 
-Phase 1 (feasibility) is done. The verdict is go: see `docs/phase1-report.md`. Install and test steps are in `docs/phase1-nemoclaw.md`, and build notes for the feedback submission are in `NOTES_FEEDBACK.md`.
+It runs as a Hermes agent inside NVIDIA OpenShell, set up with NemoClaw. Inference goes to Nemotron 3 models (Nano, Super and Ultra) on Nebius Token Factory.
 
-## Phase 1: Token Factory probe
+## Status
 
-`test_tokenfactory.py` lists the Token Factory catalog, then sends each Nemotron model one plain chat call and one call with a `get_weather` tool. It prints latency, token counts, and whether a real `tool_calls` entry came back.
+- **Phase 1, feasibility:** done. The verdict was go; see [docs/phase1-report.md](docs/phase1-report.md).
+- **Phase 2, the working assistant:** in progress, due October 21, 2026.
 
-PowerShell:
+## Layout
 
-```powershell
-py -m pip install -r requirements.txt
-$env:TOKENFACTORY_API_KEY = "your-key"
-py test_tokenfactory.py
-```
-
-Exit code is 0 only when every model answered and returned a tool call.
-
-Optional overrides:
-
-| Variable | Default |
+| Folder | What goes in it |
 | --- | --- |
-| `KEEPER_MODELS` | the three Nemotron 3 ids in `keeper_probe/config.py`, comma separated |
-| `TOKENFACTORY_BASE_URL` | `https://api.tokenfactory.us-central1.nebius.com/v1/` |
-| `KEEPER_MAX_TOKENS` | `1024` (reasoning models can burn tokens thinking before they answer) |
-| `KEEPER_TIMEOUT_S` | `120` |
+| `agent/` | Hermes configuration for the `keeper` sandbox (persona, config) |
+| `router/` | Picks Nano, Super or Ultra per task and logs every call to SQLite |
+| `skills/` | Keeper's skills as markdown: built-in triage and radar, plus skills learned from corrections |
+| `memory/` | Long-term memory store (markdown files on the sandbox's persistent volume) |
+| `dashboard/` | Phase 3 view of model usage, latency and cost |
+| `demo/` | Demo script and sample data. Never real inbox content. |
+| `docs/` | Setup steps, phase reports |
+| `scripts/` | Developer utilities, including the phase 1 Token Factory probe |
 
-If a model id isn't in the catalog, the script skips it and prints the closest ids that are. A case mismatch gets corrected automatically.
+## Setup
 
-If the tool line says the call "came back as TEXT in content", the model tried to call the tool but the server returned it as plain text. An agent loop would need to parse that text itself.
+1. Install NemoClaw with the Hermes agent and connect it to Token Factory by following [docs/phase1-nemoclaw.md](docs/phase1-nemoclaw.md).
+2. For local development, copy `.env.example` to `.env` and fill in your keys. Inside the sandbox, the OpenShell gateway holds the keys instead.
+
+## Feedback
+
+[NOTES_FEEDBACK.md](NOTES_FEEDBACK.md) logs everything that broke or was confusing in Token Factory, NemoClaw, OpenShell, Hermes and Nemotron while building this.
+
+## License
+
+MIT. See [LICENSE](LICENSE).

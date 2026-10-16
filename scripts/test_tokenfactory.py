@@ -2,7 +2,7 @@
 
 Usage (PowerShell):
     $env:TOKENFACTORY_API_KEY = "your-key"
-    py test_tokenfactory.py
+    py scripts\test_tokenfactory.py
 
 Optional env vars: KEEPER_MODELS (comma-separated ids), TOKENFACTORY_BASE_URL,
 KEEPER_TIMEOUT_S, KEEPER_MAX_TOKENS.

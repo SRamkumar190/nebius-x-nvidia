@@ -45,4 +45,4 @@ Yes. Two separate pieces of evidence:
 
 ## Fallback (not needed)
 
-If NemoClaw stops working before the deadline, the fallback from the original plan still applies: a small Python agent loop using the `openai` client against Token Factory, with our own tool dispatch and a memory file, run inside an OpenShell sandbox. `keeper_probe/` already has the client setup and a working tool-call round trip to build from.
+If NemoClaw stops working before the deadline, the fallback from the original plan still applies: a small Python agent loop using the `openai` client against Token Factory, with our own tool dispatch and a memory file, run inside an OpenShell sandbox. `scripts/keeper_probe/` already has the client setup and a working tool-call round trip to build from.
