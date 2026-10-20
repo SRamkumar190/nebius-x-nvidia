@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Keeper's command line inside the sandbox: keeper {memory|skills|router} ...
+set -euo pipefail
+APP_DIR="${KEEPER_APP_DIR:-/sandbox/keeper/app}"
+PY="${KEEPER_PYTHON:-/opt/hermes/.venv/bin/python}"
+export KEEPER_DATA_DIR="${KEEPER_DATA_DIR:-/sandbox/keeper/data}"
+export PYTHONPATH="$APP_DIR${PYTHONPATH:+:$PYTHONPATH}"
+
+case "${1:-}" in
+  memory|skills|router)
+    cmd="$1"; shift
+    exec "$PY" -m "$cmd" "$@" ;;
+  *)
+    echo "usage: keeper {memory|skills|router} ..." >&2
+    exit 2 ;;
+esac

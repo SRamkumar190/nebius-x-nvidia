@@ -1,0 +1,20 @@
+# NemoClaw policy preset: opens Token Factory to Keeper's router only.
+# Apply with: nemohermes keeper policy add --from-file agent/openshell/policies/keeper-tokenfactory.yaml
+preset:
+  name: keeper-tokenfactory
+  description: "Nebius Token Factory chat completions for Keeper's model router"
+
+network_policies:
+  keeper_tokenfactory:
+    name: keeper_tokenfactory
+    endpoints:
+      - host: api.tokenfactory.us-central1.nebius.com
+        port: 443
+        protocol: rest
+        enforcement: enforce
+        rules:
+          - allow: { method: POST, path: "/v1/chat/completions" }
+          - allow: { method: GET, path: "/v1/models" }
+    binaries:
+      # Only the Python that runs /sandbox/keeper/bin/keeper.
+      - { path: /opt/hermes/.venv/bin/python }

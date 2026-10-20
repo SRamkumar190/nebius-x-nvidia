@@ -1,7 +1,27 @@
 # skills
 
-Keeper's skills, one markdown file each, with a name, a trigger and steps. Planned for phase 2, items 3 to 5.
+Keeper's skills are standard Hermes `SKILL.md` files, so Hermes finds and loads them itself. Keeper requires three parts, which map onto Hermes's own fields:
 
-- **Learned skills:** when you correct Keeper in chat, it proposes a new skill or an update to an existing one. It saves the change only after you confirm.
-- **Inbox and calendar triage** (item 4): sorts unread demo Gmail into junk, actionable, due and newsletter. It turns due items into calendar events and drafts replies for actionable mail. It never sends anything.
-- **Opportunity radar** (item 5): runs daily Tavily searches against `profile.md`, scores the results, and posts the top five to Telegram.
+| Keeper | SKILL.md |
+| --- | --- |
+| name | frontmatter `name` |
+| trigger | frontmatter `description` ("Use when ...") and the `## When to Use` section |
+| steps | numbered list under `## Procedure` |
+
+`hermes/` holds the skills Keeper ships with. `agent/deploy.sh` copies them into `/sandbox/.hermes/skills/keeper/`.
+
+- `keeper-learn-from-corrections`: when you correct Keeper, it asks Nemotron 3 Ultra for a skill draft (`keeper skills draft`) and saves it through Hermes's `skill_manage` tool. With `skills.write_approval: true`, nothing lands until you reply `/skills approve <id>`.
+- `keeper-memory`: when to store and look up facts in Keeper's markdown memory.
+
+The Python package in this folder backs the `keeper skills` command:
+
+```bash
+keeper skills list
+keeper skills show <name>
+keeper skills check path/to/SKILL.md
+keeper skills draft --correction "..." [--context "..."] [--update <name>]
+```
+
+`draft` only prints a proposal. It never installs anything.
+
+The inbox triage skill (item 4) and the opportunity radar (item 5) will land here too.
