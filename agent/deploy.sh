@@ -16,22 +16,33 @@ STAGE="$(mktemp -d)"
 trap 'rm -rf "$STAGE"' EXIT
 nh() { nemohermes "$SANDBOX" "$@"; }
 
-echo "== stage code"
-mkdir -p "$STAGE/app"
+# Stage everything on the Linux filesystem first. OpenShell's upload reads
+# files under /mnt/c (the Windows drive) as all zero bytes, so nothing is
+# uploaded straight from the repo checkout.
+echo "== stage code, the keeper command and skills"
+mkdir -p "$STAGE/app" "$STAGE/bin" "$STAGE/skills"
 cp -r "$ROOT/router" "$ROOT/memory" "$ROOT/skills" "$STAGE/app/"
 rm -rf "$STAGE/app/skills/hermes"
 find "$STAGE/app" -name __pycache__ -prune -exec rm -rf {} +
+cp "$ROOT/agent/bin/keeper" "$STAGE/bin/keeper"
+chmod +x "$STAGE/bin/keeper"
+cp -r "$ROOT"/skills/hermes/*/ "$STAGE/skills/"
 
+# Upload copies a folder *into* the destination, so each folder goes to its
+# parent. Replace Keeper's code and shipped skills, but leave data/ and any
+# skills you approved alone.
 echo "== upload code and the keeper command"
-nh exec -- mkdir -p /sandbox/keeper/app /sandbox/keeper/bin /sandbox/keeper/data /sandbox/.hermes/skills/keeper
-nh upload "$STAGE/app/" /sandbox/keeper/app/
-nh upload "$ROOT/agent/bin/keeper" /sandbox/keeper/bin/
+nh exec -- rm -rf /sandbox/keeper/app /sandbox/keeper/bin
+nh exec -- mkdir -p /sandbox/keeper/data /sandbox/.hermes/skills/keeper
+nh upload "$STAGE/app" /sandbox/keeper/
+nh upload "$STAGE/bin" /sandbox/keeper/
 nh exec -- chmod +x /sandbox/keeper/bin/keeper
 
 echo "== install Keeper's skills"
-for dir in "$ROOT"/skills/hermes/*/; do
+for dir in "$STAGE"/skills/*/; do
   name="$(basename "$dir")"
-  nh upload "$dir" "/sandbox/.hermes/skills/keeper/$name/"
+  nh exec -- rm -rf "/sandbox/.hermes/skills/keeper/$name"
+  nh upload "${dir%/}" /sandbox/.hermes/skills/keeper/
   echo "   $name"
 done
 
@@ -56,6 +67,9 @@ nh exec -- hermes config set skills.write_approval true
 # Let terminal commands see the Token Factory placeholder. Hermes strips
 # key-like variables by default; the real key never enters the sandbox.
 nh exec -- hermes config set terminal.env_passthrough '["TOKENFACTORY_API_KEY"]'
+
+echo "== check the deployed files"
+nh exec -- /sandbox/keeper/bin/keeper skills list
 
 echo
 echo "Deployed. Restart Hermes so it picks up SOUL.md and the setting:"
