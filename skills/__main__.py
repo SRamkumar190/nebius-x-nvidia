@@ -64,6 +64,11 @@ def main(argv=None) -> int:
                   f"learned rules {'yes' if 'keeper:learned:start' in text else 'no'}")
         prompt = latest_system_prompt()
         print(f"Last session's system prompt: {len(prompt)} chars")
+        if not prompt:
+            from .session import describe_schema
+            print("  (no stored system prompt found; state.db tables, for debugging:)")
+            for line in describe_schema():
+                print("   " + line)
         for needle in ("Your name is Keeper", "Learned rules", "/teach"):
             print(f"  contains {needle!r}: {'yes' if needle in prompt else 'NO'}")
         print("  starts with: " + prompt[:160].replace("\n", " "))

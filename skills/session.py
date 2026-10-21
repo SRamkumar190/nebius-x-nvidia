@@ -93,3 +93,20 @@ def latest_system_prompt(db_path: Path | None = None) -> str:
         return _text(row[0]) if row else ""
     finally:
         conn.close()
+
+
+def describe_schema(db_path: Path | None = None) -> list[str]:
+    """One line per table in state.db: name(columns). For debugging only."""
+    db_path = db_path or state_db_path()
+    conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True, timeout=5)
+    try:
+        tables = [r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")]
+        out = []
+        for name in tables:
+            if "fts" in name.lower():
+                continue
+            cols = [r[1] for r in conn.execute(f"PRAGMA table_info('{name}')")]
+            out.append(f"{name}({', '.join(cols)})"[:220])
+        return out
+    finally:
+        conn.close()
