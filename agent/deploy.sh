@@ -49,7 +49,8 @@ done
 echo "== merge the Keeper section into both persona files"
 # NemoClaw keeps /sandbox/SOUL.md as the durable persona and appears to copy
 # it over /sandbox/.hermes/SOUL.md (what Hermes reads) when the sandbox
-# starts, so both get the Keeper block. Everything else in them is kept.
+# starts, so both get the Keeper section. Learned rules and anything you added
+# are kept; NemoClaw's stock "You are Hermes Agent" paragraph is dropped.
 mkdir -p "$HOME/keeper-backups"
 for remote_dir in /sandbox /sandbox/.hermes; do
   work="$STAGE/soul$(echo "$remote_dir" | tr / _)"
@@ -59,13 +60,9 @@ for remote_dir in /sandbox /sandbox/.hermes; do
   else
     : > "$work/SOUL.md"
   fi
-  python3 - "$work/SOUL.md" "$ROOT/agent/SOUL.md" <<'PY'
-import re, sys
-current, keeper = (open(p, encoding="utf-8").read() for p in sys.argv[1:3])
-current = re.sub(r"\n*<!-- keeper:start -->.*?<!-- keeper:end -->\n*", "\n", current, flags=re.S).strip()
-# Keeper goes first: the model takes its identity from the top of SOUL.md.
-open(sys.argv[1], "w", encoding="utf-8").write(keeper.rstrip() + "\n\n" + current + "\n" if current else keeper)
-PY
+  # Keeper's section goes first (the model takes its identity from the top),
+  # then learned rules and whatever else was there. See skills/soul.py.
+  (cd "$ROOT" && PYTHONDONTWRITEBYTECODE=1 python3 -m skills.soul merge "$work/SOUL.md" agent/SOUL.md)
   nh upload "$work/SOUL.md" "$remote_dir/"
   echo "   $remote_dir/SOUL.md"
 done

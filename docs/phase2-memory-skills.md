@@ -20,15 +20,15 @@ Run `git pull` in PowerShell first, so the new files are there.
 | Router call log | `/sandbox/keeper/data/router.db` | same |
 | Skills, shipped and learned | `/sandbox/.hermes/skills/keeper/<name>/SKILL.md` | same. Hermes loads them on its own. |
 | Skill changes waiting for approval | `/sandbox/.hermes/pending/skills/` | Hermes keeps staged writes across restarts |
-| Keeper persona | the Keeper block in `/sandbox/.hermes/SOUL.md` | same |
+| Keeper persona | the Keeper section at the top of `/sandbox/SOUL.md` and `/sandbox/.hermes/SOUL.md` | same |
+| Learned rules, one line per learned skill | right under the Keeper section in both SOUL.md files | same |
 
 The learning loop goes like this:
 
-1. You correct Keeper in chat.
-2. The `keeper-learn-from-corrections` skill has Keeper run `keeper skills draft`, which asks Nemotron 3 Ultra (through the router) to write a SKILL.md.
-3. Keeper saves the draft with Hermes's `skill_manage` tool. With `skills.write_approval: true`, that write is staged and doesn't land yet.
-4. You approve it with `/skills approve <id>`, in the terminal chat or in Telegram.
-5. Next time a matching request comes in, Hermes loads the skill.
+1. You correct Keeper in chat. Keeper redoes the answer and tells you to type `/teach`.
+2. `/teach` reads your correction from Hermes's session log and has Nemotron 3 Ultra (through the router) write a SKILL.md. You see the draft.
+3. `/keep` installs it and adds its one-line rule to the "Learned rules" list in SOUL.md. `/drop` throws it away. Nothing is saved until you type `/keep`.
+4. In the next conversation, the rule is in Keeper's prompt, and Hermes can load the full skill when it needs the steps.
 
 ## 1. Give the router all three models (one time)
 
@@ -71,8 +71,9 @@ nemohermes keeper stop && nemohermes keeper start
 The deploy script:
 - copies the code and the `keeper` command into `/sandbox/keeper/`
 - installs the two Keeper skills
-- adds the Keeper block to SOUL.md. It keeps whatever is already in that file and saves a backup to `~/keeper-backups/`.
+- puts the Keeper section at the top of both SOUL.md files. Learned rules and anything you added stay. NemoClaw's stock "You are Hermes Agent" paragraph is dropped, because it contradicts Keeper's name. A backup of each file goes to `~/keeper-backups/` first.
 - turns on `skills.write_approval`
+- adds the `/teach`, `/keep` and `/drop` quick commands
 - lets terminal commands see the Token Factory placeholder (`terminal.env_passthrough`). Hermes strips key-like variables from terminal commands by default.
 
 It's safe to run again after every change.
@@ -87,9 +88,32 @@ nemohermes keeper exec -- hermes config get terminal.env_passthrough
 nemohermes keeper exec -- /sandbox/keeper/bin/keeper skills list
 ```
 
-The first command should print `true`, and the second should list `TOKENFACTORY_API_KEY`. The second should list `keeper-learn-from-corrections` and `keeper-memory`.
+The first command should print `true`, the second should list `TOKENFACTORY_API_KEY`, and the third should list `keeper-learn-from-corrections` and `keeper-memory`.
 
-## 3. Proof: memory survives a restart
+## 3. Check that Hermes uses Keeper's persona
+
+Hermes builds a session's system prompt once, when the session starts, and keeps it for that whole session. So start a fresh chat after every deploy:
+
+```bash
+nemohermes launch keeper
+```
+
+Send `hi`, check that it introduces itself as Keeper, and type `/exit`. Then:
+
+```bash
+nemohermes keeper exec -- /sandbox/keeper/bin/keeper skills prompt-check
+```
+
+It prints three things:
+- what each SOUL.md holds
+- what Hermes's own prompt-injection scanner and SOUL.md loader say about the file Hermes reads. Hermes skips a SOUL.md it thinks is an injection attempt and uses its built-in "You are Hermes Agent" identity instead.
+- what the system prompt of your latest chat contains
+
+The last line is the verdict. "Keeper's persona is in the prompt" means it works. "No conversation since SOUL.md last changed" means the latest chat started before the deploy, so start a new one and run it again. Anything else, send me the whole output.
+
+Telegram and other gateway sessions don't restart on their own, so send `/new` there after a deploy.
+
+## 4. Proof: memory survives a restart
 
 ```bash
 nemohermes keeper exec -- /sandbox/keeper/bin/keeper memory add deadlines "NVIDIA GTC student hackathon closes Nov 1"
@@ -100,7 +124,7 @@ nemohermes keeper exec -- cat /sandbox/keeper/data/memory/deadlines.md
 
 It passes if both of the last two commands still show the hackathon line.
 
-## 4. Proof: a correction becomes a skill, and is used after a restart
+## 5. Proof: a correction becomes a skill, and is used after a restart
 
 Skills are learned with three commands that you type in the chat, in the terminal or in Telegram. Hermes runs them as quick commands without asking the chat model, so the model can't save anything on its own:
 

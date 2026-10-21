@@ -1,4 +1,5 @@
-"""Read the user's latest correction from Hermes's session log (state.db).
+"""Read Hermes's session log (state.db): the user's latest correction, and
+the system prompt Hermes built for the latest conversation.
 
 Opened read-only. The exact schema isn't documented, so we look for the
 table that has `role` and `content` columns and read it newest first.
@@ -8,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 import sqlite3
+from dataclasses import dataclass
 from pathlib import Path
 
 
@@ -67,8 +69,27 @@ def last_correction(db_path: Path | None = None) -> tuple[str, str | None]:
     return correction, None
 
 
-def latest_system_prompt(db_path: Path | None = None) -> str:
-    """The system prompt Hermes stored for its most recent session."""
+@dataclass
+class StoredPrompt:
+    prompt: str
+    session_id: str | None = None
+    source: str | None = None
+    started_at: float | None = None  # Unix time, as Hermes stores it
+
+
+def _started(value) -> float | None:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def latest_stored_prompt(db_path: Path | None = None) -> StoredPrompt:
+    """The system prompt Hermes stored for its latest conversation.
+
+    Sessions you actually typed in come first. Hermes also starts sessions on
+    its own (NemoClaw's onboarding smoke test is one), and those have no user
+    messages."""
     db_path = db_path or state_db_path()
     conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True, timeout=5)
     try:
@@ -79,12 +100,19 @@ def latest_system_prompt(db_path: Path | None = None) -> str:
             cols = [r[1] for r in conn.execute("PRAGMA table_info('sessions')")]
             if "system_prompt_hash" in cols:
                 order = "s.started_at" if "started_at" in cols else "s.rowid"
-                row = conn.execute(
-                    "SELECT p.prompt FROM sessions s JOIN system_prompts p ON p.hash = s.system_prompt_hash "
-                    f"ORDER BY {order} DESC LIMIT 1"
-                ).fetchone()
-                if row and row[0]:
-                    return row[0]
+                extra = ", ".join(f"s.{c}" if c in cols else "NULL" for c in ("id", "source", "started_at"))
+                query = (f"SELECT p.prompt, {extra} FROM sessions s "
+                         "JOIN system_prompts p ON p.hash = s.system_prompt_hash {where} "
+                         f"ORDER BY {order} DESC LIMIT 1")
+                wheres = [""]
+                msg_cols = [r[1] for r in conn.execute("PRAGMA table_info('messages')")] if "messages" in tables else []
+                if "id" in cols and {"session_id", "role"} <= set(msg_cols):
+                    wheres.insert(0, "WHERE EXISTS (SELECT 1 FROM messages m "
+                                     "WHERE m.session_id = s.id AND m.role = 'user')")
+                for where in wheres:
+                    row = conn.execute(query.format(where=where)).fetchone()
+                    if row and row[0]:
+                        return StoredPrompt(row[0], row[1], row[2], _started(row[3]))
         for name in tables:
             if "fts" in name.lower():
                 continue
@@ -96,15 +124,19 @@ def latest_system_prompt(db_path: Path | None = None) -> str:
                     f"SELECT {col} FROM '{name}' WHERE {col} IS NOT NULL ORDER BY {order} DESC LIMIT 1"
                 ).fetchone()
                 if row:
-                    return row[0] or ""
+                    return StoredPrompt(row[0] or "")
         # Fall back to the newest system message, if sessions keep it there.
         table, order = _messages_table(conn)
         row = conn.execute(
             f"SELECT content FROM '{table}' WHERE role = 'system' ORDER BY {order} DESC LIMIT 1"
         ).fetchone()
-        return _text(row[0]) if row else ""
+        return StoredPrompt(_text(row[0]) if row else "")
     finally:
         conn.close()
+
+
+def latest_system_prompt(db_path: Path | None = None) -> str:
+    return latest_stored_prompt(db_path).prompt
 
 
 def describe_schema(db_path: Path | None = None) -> list[str]:

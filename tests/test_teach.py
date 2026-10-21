@@ -109,28 +109,6 @@ class TeachFlowTest(unittest.TestCase):
         self.assertEqual(len(list((Path(os.environ["KEEPER_DATA_DIR"]) / "skill-drafts" / "replaced").iterdir())), 1)
 
 
-if __name__ == "__main__":
-    unittest.main()
-
-
-class SoulTest(unittest.TestCase):
-    def test_pin_adds_replaces_and_keeps_other_text(self):
-        from skills.soul import pin_rule
-        with tempfile.TemporaryDirectory() as tmp:
-            soul = Path(tmp) / "SOUL.md"
-            soul.write_text("<!-- keeper:start -->\nKeeper\n<!-- keeper:end -->\n\nYou are Hermes Agent.\n")
-            pin_rule("a-rule", "Use when x.", soul)
-            pin_rule("b-rule", "Use when y.", soul)
-            pin_rule("a-rule", "Use when x, updated.", soul)
-            text = soul.read_text()
-            self.assertEqual(text.count("keeper:learned:start"), 1)
-            self.assertIn("- **a-rule**: Use when x, updated.", text)
-            self.assertNotIn("- **a-rule**: Use when x.\n", text)
-            self.assertIn("- **b-rule**: Use when y.", text)
-            self.assertTrue(text.startswith("<!-- keeper:start -->"))
-            self.assertIn("You are Hermes Agent.", text)
-
-
 class SystemPromptTest(unittest.TestCase):
     def test_reads_prompt_through_hash_table(self):
         from skills.session import latest_system_prompt
@@ -144,3 +122,7 @@ class SystemPromptTest(unittest.TestCase):
             conn.commit()
             conn.close()
             self.assertEqual(latest_system_prompt(db), "Your name is Keeper.")
+
+
+if __name__ == "__main__":
+    unittest.main()

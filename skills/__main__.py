@@ -5,9 +5,11 @@
     keeper skills check <file>
     keeper skills draft --correction "..." [--context "..."] [--update <name>]
     keeper skills teach | keep | drop     (behind the /teach, /keep, /drop quick commands)
+    keeper skills pin <name>              (put an installed skill's rule in SOUL.md)
+    keeper skills prompt-check            (is Keeper's persona in Hermes's prompt?)
 
-`draft` only prints a proposal. Saving goes through Hermes's skill_manage
-tool, so the write-approval gate decides whether it lands.
+`draft` only prints a proposal. `teach` drafts one from your last chat
+message and `keep` installs it, so nothing is saved until you say so.
 """
 from __future__ import annotations
 
@@ -55,24 +57,8 @@ def main(argv=None) -> int:
         return 0
 
     if args.command == "prompt-check":
-        from .session import latest_system_prompt
-        from .soul import soul_paths
-        for path in soul_paths():
-            text = path.read_text(encoding="utf-8") if path.exists() else ""
-            print(f"{path}: {'missing' if not path.exists() else str(len(text)) + ' chars'}, "
-                  f"Keeper block {'yes' if 'keeper:start' in text else 'NO'}, "
-                  f"learned rules {'yes' if 'keeper:learned:start' in text else 'no'}")
-        prompt = latest_system_prompt()
-        print(f"Last session's system prompt: {len(prompt)} chars")
-        if not prompt:
-            from .session import describe_schema
-            print("  (no stored system prompt found; state.db tables, for debugging:)")
-            for line in describe_schema():
-                print("   " + line)
-        for needle in ("Your name is Keeper", "Learned rules", "/teach"):
-            print(f"  contains {needle!r}: {'yes' if needle in prompt else 'NO'}")
-        print("  starts with: " + prompt[:160].replace("\n", " "))
-        return 0
+        from .promptcheck import run
+        return run()
 
     if args.command in ("teach", "keep", "drop"):
         try:
