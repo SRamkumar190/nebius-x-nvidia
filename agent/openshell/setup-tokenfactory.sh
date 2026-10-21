@@ -3,7 +3,14 @@
 #   bash agent/openshell/setup-tokenfactory.sh [sandbox]
 # Gives Keeper's router direct access to all three Nemotron models. The
 # sandbox's inference.local route rewrites every request to one model.
+# NemoClaw puts nemohermes and openshell in ~/.local/bin, and nemohermes runs
+# on nvm's Node. Load both so this also works from `bash script.sh` in PowerShell.
+export PATH="$HOME/.local/bin:$PATH"
+if [ -s "$HOME/.nvm/nvm.sh" ]; then . "$HOME/.nvm/nvm.sh" >/dev/null 2>&1; fi
 set -euo pipefail
+for tool in nemohermes openshell; do
+  command -v "$tool" >/dev/null || { echo "$tool not found. Run this from the Ubuntu (WSL) window where NemoClaw is installed." >&2; exit 1; }
+done
 SANDBOX="${1:-keeper}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 PROFILE="$HERE/tokenfactory-keeper-v1.yaml"

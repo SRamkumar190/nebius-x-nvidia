@@ -2,7 +2,14 @@
 # Copy Keeper's code, skills and persona into the sandbox. Run in WSL from the repo root:
 #   bash agent/deploy.sh [sandbox]
 # Safe to rerun after every change.
+# NemoClaw puts nemohermes and openshell in ~/.local/bin, and nemohermes runs
+# on nvm's Node. Load both so this also works from `bash script.sh` in PowerShell.
+export PATH="$HOME/.local/bin:$PATH"
+if [ -s "$HOME/.nvm/nvm.sh" ]; then . "$HOME/.nvm/nvm.sh" >/dev/null 2>&1; fi
 set -euo pipefail
+for tool in nemohermes openshell; do
+  command -v "$tool" >/dev/null || { echo "$tool not found. Run this from the Ubuntu (WSL) window where NemoClaw is installed." >&2; exit 1; }
+done
 SANDBOX="${1:-keeper}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 STAGE="$(mktemp -d)"
