@@ -125,6 +125,18 @@ class RouterTest(unittest.TestCase):
         with self.assertLogs("router.core", level="ERROR"):
             self._route("draft")
 
+    def test_key_file_wins_over_placeholder(self):
+        key_file = Path(self.tmp.name) / "tokenfactory.key"
+        key_file.write_text("real-key\n")
+        settings = load_settings({"TOKENFACTORY_API_KEY": "openshell:placeholder",
+                                  "KEEPER_TOKENFACTORY_KEY_FILE": str(key_file)})
+        self.assertEqual(settings.api_key, "real-key")
+
+    def test_missing_key_file_falls_back_to_env(self):
+        settings = load_settings({"TOKENFACTORY_API_KEY": "env-key",
+                                  "KEEPER_TOKENFACTORY_KEY_FILE": "/nonexistent/key"})
+        self.assertEqual(settings.api_key, "env-key")
+
     def test_model_ids_can_be_overridden_by_env(self):
         settings = load_settings({"KEEPER_MODEL_NANO": "nvidia/other-nano", "KEEPER_ROUTER_DB": str(self.db)})
         self.assertEqual(settings.models["nano"], "nvidia/other-nano")

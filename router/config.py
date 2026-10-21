@@ -25,6 +25,16 @@ class RouterSettings:
     models: dict = field(default_factory=dict)
 
 
+def _api_key(env: Mapping[str, str]) -> str:
+    # Fallback for the sandbox: if OpenShell won't swap its placeholder for the
+    # real key, the key can live in a file only Keeper's code reads
+    # (agent/openshell/install-key-file.sh). The file wins when it exists.
+    key_file = env.get("KEEPER_TOKENFACTORY_KEY_FILE", "").strip()
+    if key_file and Path(key_file).is_file():
+        return Path(key_file).read_text(encoding="utf-8").strip()
+    return env.get("TOKENFACTORY_API_KEY", "").strip()
+
+
 def load_settings(env: Mapping[str, str] = os.environ) -> RouterSettings:
     data_dir = Path(env.get("KEEPER_DATA_DIR", "./data"))
     models = {
@@ -33,7 +43,7 @@ def load_settings(env: Mapping[str, str] = os.environ) -> RouterSettings:
     }
     return RouterSettings(
         base_url=env.get("TOKENFACTORY_BASE_URL", DEFAULT_BASE_URL),
-        api_key=env.get("TOKENFACTORY_API_KEY", "").strip(),
+        api_key=_api_key(env),
         db_path=Path(env.get("KEEPER_ROUTER_DB", str(data_dir / "router.db"))),
         timeout_s=float(env.get("KEEPER_TIMEOUT_S", "120")),
         models=models,

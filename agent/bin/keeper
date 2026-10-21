@@ -4,6 +4,8 @@ set -euo pipefail
 APP_DIR="${KEEPER_APP_DIR:-/sandbox/keeper/app}"
 PY="${KEEPER_PYTHON:-/opt/hermes/.venv/bin/python}"
 export KEEPER_DATA_DIR="${KEEPER_DATA_DIR:-/sandbox/keeper/data}"
+# Only used if agent/openshell/install-key-file.sh was run.
+export KEEPER_TOKENFACTORY_KEY_FILE="${KEEPER_TOKENFACTORY_KEY_FILE:-/sandbox/keeper/secrets/tokenfactory.key}"
 export PYTHONPATH="$APP_DIR${PYTHONPATH:+:$PYTHONPATH}"
 
 case "${1:-}" in
