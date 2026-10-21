@@ -107,7 +107,7 @@ Skills are learned with three commands that you type in the chat, in the termina
 | Command | What it does |
 | --- | --- |
 | `/teach` | Reads your last message, has Nemotron 3 Ultra write a skill from it (name, trigger, steps), checks the format, and shows you the draft |
-| `/keep` | Saves the draft to `/sandbox/.hermes/skills/keeper/<name>/SKILL.md`, where Hermes picks it up |
+| `/keep` | Saves the draft to `/sandbox/.hermes/skills/keeper/<name>/SKILL.md`, and adds its one-line rule to the "Learned rules" list in SOUL.md, which is in every session's prompt |
 | `/drop` | Throws the draft away |
 
 1. Open the chat with `nemohermes launch keeper`. Then type:
@@ -145,5 +145,7 @@ It passes if:
 - `skills list` shows the new skill after the restart
 - `router recent` has a `skill_write` row on `nvidia/Nemotron-3-Ultra-550b-a55b`
 - the answer has at most 3 bullets and no intro sentence
+
+Why the one-line rule is needed: Hermes only loads a skill's full text when the model asks for it, and in testing Nemotron 3 Super answered without loading the new skill. The rule in SOUL.md is always in front of it. To pin a skill that was saved before this change, run `nemohermes keeper exec -- /sandbox/keeper/bin/keeper skills pin <name>`.
 
 `skills.write_approval` stays on as a backstop. If the model or Hermes's background review calls `skill_manage` anyway, the write waits in `/skills pending` until you approve or reject it.

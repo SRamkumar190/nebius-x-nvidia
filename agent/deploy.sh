@@ -56,8 +56,9 @@ fi
 python3 - "$STAGE/SOUL.md" "$ROOT/agent/SOUL.md" <<'PY'
 import re, sys
 current, keeper = (open(p, encoding="utf-8").read() for p in sys.argv[1:3])
-current = re.sub(r"\n*<!-- keeper:start -->.*?<!-- keeper:end -->\n*", "\n", current, flags=re.S).rstrip()
-open(sys.argv[1], "w", encoding="utf-8").write((current + "\n\n" if current else "") + keeper)
+current = re.sub(r"\n*<!-- keeper:start -->.*?<!-- keeper:end -->\n*", "\n", current, flags=re.S).strip()
+# Keeper goes first: the model takes its identity from the top of SOUL.md.
+open(sys.argv[1], "w", encoding="utf-8").write(keeper.rstrip() + "\n\n" + current + "\n" if current else keeper)
 PY
 nh upload "$STAGE/SOUL.md" /sandbox/.hermes/
 

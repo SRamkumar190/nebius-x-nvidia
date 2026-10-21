@@ -45,7 +45,13 @@ def main(argv=None) -> int:
     draft.add_argument("--update", metavar="NAME")
     for name in ("teach", "keep", "drop"):
         sub.add_parser(name)
+    pin = sub.add_parser("pin", help="put an installed skill's rule in SOUL.md")
+    pin.add_argument("name")
     args = parser.parse_args(argv)
+
+    if args.command == "pin":
+        print(teach_flow.pin(args.name))
+        return 0
 
     if args.command in ("teach", "keep", "drop"):
         try:

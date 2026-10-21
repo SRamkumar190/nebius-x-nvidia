@@ -18,6 +18,7 @@ from .draft import draft_skill
 from .format import parse_skill
 from .library import find_skill, skills_root
 from .session import last_correction
+from .soul import pin_rule
 
 
 def _drafts_dir() -> Path:
@@ -61,8 +62,18 @@ def keep() -> str:
         shutil.copy2(target, backup)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(skill.text, encoding="utf-8")
+    pin_rule(skill.name, skill.description)
     path.unlink()
     return f"Saved skill {skill.name}. I'll use it from the next conversation on."
+
+
+def pin(name: str) -> str:
+    """Add an already-installed skill to SOUL.md's learned rules."""
+    found = find_skill(name)
+    if not found:
+        return f"No skill named {name}."
+    pin_rule(found[1].name, found[1].description)
+    return f"Pinned {name}. It's in every conversation's prompt from the next one on."
 
 
 def drop() -> str:

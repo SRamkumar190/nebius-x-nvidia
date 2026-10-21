@@ -59,6 +59,7 @@ class TeachFlowTest(unittest.TestCase):
             "KEEPER_DATA_DIR": str(root / "data"),
             "KEEPER_SKILLS_DIR": str(self.skills),
             "KEEPER_HERMES_STATE_DB": str(self.db),
+            "HERMES_HOME": str(root / "hermes"),
         })
         self.env.start()
 
@@ -84,6 +85,8 @@ class TeachFlowTest(unittest.TestCase):
         self.assertIn("Saved skill summary-style", teach.keep())
         self.assertTrue((self.skills / "keeper" / "summary-style" / "SKILL.md").exists())
         self.assertFalse(teach.pending_path().exists())
+        soul = (Path(os.environ["HERMES_HOME"]) / "SOUL.md").read_text()
+        self.assertIn("- **summary-style**: Use when the user asks for a summary.", soul)
 
     def test_drop_discards_without_installing(self):
         route_fn, _ = self.route(GOOD)
@@ -107,3 +110,21 @@ class TeachFlowTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SoulTest(unittest.TestCase):
+    def test_pin_adds_replaces_and_keeps_other_text(self):
+        from skills.soul import pin_rule
+        with tempfile.TemporaryDirectory() as tmp:
+            soul = Path(tmp) / "SOUL.md"
+            soul.write_text("<!-- keeper:start -->\nKeeper\n<!-- keeper:end -->\n\nYou are Hermes Agent.\n")
+            pin_rule("a-rule", "Use when x.", soul)
+            pin_rule("b-rule", "Use when y.", soul)
+            pin_rule("a-rule", "Use when x, updated.", soul)
+            text = soul.read_text()
+            self.assertEqual(text.count("keeper:learned:start"), 1)
+            self.assertIn("- **a-rule**: Use when x, updated.", text)
+            self.assertNotIn("- **a-rule**: Use when x.\n", text)
+            self.assertIn("- **b-rule**: Use when y.", text)
+            self.assertTrue(text.startswith("<!-- keeper:start -->"))
+            self.assertIn("You are Hermes Agent.", text)
