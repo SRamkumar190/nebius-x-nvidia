@@ -129,3 +129,18 @@ class SoulTest(unittest.TestCase):
             self.assertIn("- **b-rule**: Use when y.", text)
             self.assertTrue(text.startswith("<!-- keeper:start -->"))
             self.assertIn("You are Hermes Agent.", text)
+
+
+class SystemPromptTest(unittest.TestCase):
+    def test_reads_prompt_through_hash_table(self):
+        from skills.session import latest_system_prompt
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Path(tmp) / "state.db"
+            conn = sqlite3.connect(db)
+            conn.execute("CREATE TABLE system_prompts (hash TEXT, prompt TEXT)")
+            conn.execute("CREATE TABLE sessions (id TEXT, started_at REAL, system_prompt TEXT, system_prompt_hash TEXT)")
+            conn.execute("INSERT INTO system_prompts VALUES ('h1', 'old prompt'), ('h2', 'Your name is Keeper.')")
+            conn.execute("INSERT INTO sessions VALUES ('a', 1, NULL, 'h1'), ('b', 2, NULL, 'h2')")
+            conn.commit()
+            conn.close()
+            self.assertEqual(latest_system_prompt(db), "Your name is Keeper.")

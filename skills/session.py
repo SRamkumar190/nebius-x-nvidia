@@ -73,6 +73,18 @@ def latest_system_prompt(db_path: Path | None = None) -> str:
     conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True, timeout=5)
     try:
         tables = [r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")]
+        # Hermes 0.21.3 stores each distinct prompt once in system_prompts(hash, prompt)
+        # and points to it from sessions.system_prompt_hash.
+        if "system_prompts" in tables and "sessions" in tables:
+            cols = [r[1] for r in conn.execute("PRAGMA table_info('sessions')")]
+            if "system_prompt_hash" in cols:
+                order = "s.started_at" if "started_at" in cols else "s.rowid"
+                row = conn.execute(
+                    "SELECT p.prompt FROM sessions s JOIN system_prompts p ON p.hash = s.system_prompt_hash "
+                    f"ORDER BY {order} DESC LIMIT 1"
+                ).fetchone()
+                if row and row[0]:
+                    return row[0]
         for name in tables:
             if "fts" in name.lower():
                 continue
