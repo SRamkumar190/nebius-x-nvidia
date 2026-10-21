@@ -81,3 +81,7 @@ Asked "what is Nebius Token Factory?" with no context, both models confidently d
 
     Hermes's built-in skill system covered most of item 3 without new code. `skill_manage` creates and edits skills, Hermes's system prompt already asks it to record a skill "when the user corrected its approach", and `skills.write_approval: true` stages every write until `/skills approve <id>`, which also works from Telegram. Hermes's docs are clear here.
 
+11. 2026-10-21, item 2 checked live from Windows with `py -m router smoke`. All six task types answered on the intended model. Token Factory's response `model` field matched the requested id exactly on every call, so the router's served-model check works against the real API. The six calls cost $0.0038 in total (Nano $0.000115, Super $0.000252, Ultra $0.003480).
+
+    Nano spent a lot of tokens on tiny answers. A one-word email classification took 174 to 281 output tokens and 1.1 to 3.3 seconds. Ultra spent 977 output tokens on a plan of under 50 words. These look like reasoning tokens counted as completion tokens. Token Factory's model pages don't say whether reasoning can be turned off per request for Nemotron 3 (for example with a chat template flag or a system-prompt switch). That matters for triage, which runs Nano over a whole inbox every 30 minutes.
+
