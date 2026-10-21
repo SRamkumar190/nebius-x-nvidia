@@ -85,8 +85,11 @@ def main(argv=None) -> int:
         print("Ultra's draft broke the skill format twice: " + "; ".join(exc.problems), file=sys.stderr)
         return 1
     copy = _save_draft_copy(skill.name, skill.text)
-    print(skill.text)
-    print(f"[draft by {served or 'unknown model'}; copy saved to {copy}; not installed yet]", file=sys.stderr)
+    # Hermes reads stdout and stderr together. Flush the skill first, so the
+    # note can't land in front of the '---' line and get copied into content.
+    sys.stdout.write(skill.text)
+    sys.stdout.flush()
+    print(f"\n[draft by {served or 'unknown model'}; copy saved to {copy}; not installed yet]", file=sys.stderr)
     return 0
 
 
