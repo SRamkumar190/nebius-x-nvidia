@@ -125,3 +125,11 @@ Asked "what is Nebius Token Factory?" with no context, both models confidently d
     - For Hermes, rebuild needs a running sandbox to back up, so it isn't an escape route either. Docker Desktop's own dialog offers "Reset to factory defaults", which would have wiped the sandbox and its volume.
     - What worked: restart Windows (which also cleared a stuck installer that made `wsl --update` fail with 0x80070652). Then back up with `docker cp` from the stopped container, then `docker start <container>`. The supervisor connected to the gateway, and `nemohermes keeper recover` took over. NemoClaw says it won't start the container directly ("does not fall back to a direct provider-container mutation"), but a documented "stuck in Error after a Docker outage" recipe would have saved about an hour: back up with `docker cp`, `docker start`, then `recover`.
 
+23. Follow-up to 22. `docker start` got the container running and talking to the gateway again (inference succeeded, activity flushed to the gateway), but OpenShell's record stayed in `Phase: Error`:
+    - `openshell sandbox stop keeper` failed with "sandbox must be Ready to stop (current phase: Error)".
+    - `openshell sandbox start keeper` failed with "sandbox must be Stopped to start (current phase: Error)".
+    - OpenShell's docs say a main-process exit is terminal, so a Docker Desktop hiccup permanently strands a sandbox.
+    - Before that, every `nemohermes` command hung for 30 seconds on a "sandbox mutation lock" owned by a PID from before the WSL restart. NemoClaw says it recovers locks whose owner is provably dead, but it didn't here. The two lock files under `~/.nemoclaw/state/mcp-lifecycle-locks/` recorded a `pidNamespaceIdentity` from the old WSL boot, so it probably counted as "different PID namespace, fails closed". Moving them aside fixed the hangs.
+
+    What would help: a supported way to move a sandbox from Error to Stopped once its container is healthy (for example `openshell sandbox reset`), and stale-lock recovery that handles a host reboot. We re-created the sandbox and restored state with `agent/restore.sh`. The steps are in `docs/recover-error-sandbox.md`.
+
