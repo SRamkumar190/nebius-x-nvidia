@@ -67,6 +67,8 @@ nh exec -- hermes config set skills.write_approval true
 # Let terminal commands see the Token Factory placeholder. Hermes strips
 # key-like variables by default; the real key never enters the sandbox.
 nh exec -- hermes config set terminal.env_passthrough '["TOKENFACTORY_API_KEY"]'
+# /teach, /keep and /drop: typed by the user, run by Hermes without the model.
+nh exec -- hermes config set quick_commands '{"teach": {"type": "exec", "command": "/sandbox/keeper/bin/keeper skills teach"}, "keep": {"type": "exec", "command": "/sandbox/keeper/bin/keeper skills keep"}, "drop": {"type": "exec", "command": "/sandbox/keeper/bin/keeper skills drop"}}'
 
 echo "== check the deployed files"
 nh exec -- /sandbox/keeper/bin/keeper skills list

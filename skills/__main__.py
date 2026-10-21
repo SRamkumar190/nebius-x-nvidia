@@ -4,6 +4,7 @@
     keeper skills show <name>
     keeper skills check <file>
     keeper skills draft --correction "..." [--context "..."] [--update <name>]
+    keeper skills teach | keep | drop     (behind the /teach, /keep, /drop quick commands)
 
 `draft` only prints a proposal. Saving goes through Hermes's skill_manage
 tool, so the write-approval gate decides whether it lands.
@@ -18,6 +19,7 @@ from pathlib import Path
 from .draft import draft_skill
 from .format import SkillFormatError, parse_skill
 from .library import find_skill, iter_skills, skills_root
+from . import teach as teach_flow
 
 
 def _save_draft_copy(name: str, text: str) -> Path:
@@ -41,7 +43,17 @@ def main(argv=None) -> int:
     draft.add_argument("--correction", required=True)
     draft.add_argument("--context")
     draft.add_argument("--update", metavar="NAME")
+    for name in ("teach", "keep", "drop"):
+        sub.add_parser(name)
     args = parser.parse_args(argv)
+
+    if args.command in ("teach", "keep", "drop"):
+        try:
+            print(getattr(teach_flow, args.command)())
+        except Exception as exc:  # shown in chat, so keep it to one line
+            print(f"Couldn't {args.command}: {exc}")
+            return 1
+        return 0
 
     if args.command == "list":
         root = skills_root()
