@@ -17,8 +17,12 @@ PROFILE="$HERE/tokenfactory-keeper-v1.yaml"
 PROVIDER=keeper-tokenfactory
 
 echo "== 1/4 check and import the provider profile"
-openshell provider profile lint -f "$PROFILE"
-openshell provider profile import -f "$PROFILE" || echo "   (import failed; if it says the profile already exists, that's fine)"
+if openshell provider list-profiles 2>/dev/null | grep -q "tokenfactory-keeper-v1"; then
+  echo "   profile tokenfactory-keeper-v1 already imported, skipping"
+else
+  openshell provider profile lint -f "$PROFILE"
+  openshell provider profile import -f "$PROFILE"
+fi
 
 echo "== 2/4 create the provider from your Token Factory key"
 if openshell provider list 2>/dev/null | grep -q "$PROVIDER"; then
@@ -28,7 +32,9 @@ else
     read -rsp "   Token Factory API key (input hidden): " TOKENFACTORY_API_KEY; echo
   fi
   export TOKENFACTORY_API_KEY
-  openshell provider create --name "$PROVIDER" --type tokenfactory-keeper-v1 --from-existing
+  # Bare --credential NAME reads the value from that env var, so the key
+  # never appears in argv. (--from-existing only works for built-in types.)
+  openshell provider create --name "$PROVIDER" --type tokenfactory-keeper-v1 --credential TOKENFACTORY_API_KEY
   unset TOKENFACTORY_API_KEY
 fi
 

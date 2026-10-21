@@ -85,3 +85,8 @@ Asked "what is Nebius Token Factory?" with no context, both models confidently d
 
     Nano spent a lot of tokens on tiny answers. A one-word email classification took 174 to 281 output tokens and 1.1 to 3.3 seconds. Ultra spent 977 output tokens on a plan of under 50 words. These look like reasoning tokens counted as completion tokens. Token Factory's model pages don't say whether reasoning can be turned off per request for Nemotron 3 (for example with a chat template flag or a system-prompt switch). That matters for triage, which runs Nano over a whole inbox every 30 minutes.
 
+
+
+12. 2026-10-21, `agent/openshell/setup-tokenfactory.sh` on OpenShell 0.0.116. The custom profile linted and imported fine. Two things then went wrong:
+    - `openshell provider create --type tokenfactory-keeper-v1 --from-existing` failed with "failed to discover existing provider data: unsupported provider type: tokenfactory-keeper-v1". The profile has a `discovery` section, but in this version `--from-existing` only works for built-in types (the docs say discovery uses the profile only when `providers_v2_enabled=true`, and NemoClaw's gateway doesn't turn that on). The fix was `--credential TOKENFACTORY_API_KEY` with no value, which reads it from the environment.
+    - Running `openshell provider profile lint` again on a profile that's already imported fails with "custom provider profile ... already exists". Lint is meant to check a file, so failing because the gateway already has that profile is surprising, and it makes scripts that check before importing fail on every rerun.
