@@ -45,6 +45,14 @@ nemohermes keeper stop && nemohermes keeper start
 
 The script asks for your Token Factory key with a hidden prompt. If any of its four steps fails, stop and send me the output. The OpenShell commands come from OpenShell 0.0.116's providers docs, but this is their first run on your install.
 
+On OpenShell 0.0.116 with NemoClaw, the attachment works and the network rule lets the requests through. But OpenShell never swaps the placeholder for the key, so Token Factory answers 401. Turning on `providers_v2_enabled` didn't fix it either (`agent/openshell/try-providers-v2.sh` tries it, and turns it back off if it fails). What does work is putting the key in a file that only Keeper's router reads:
+
+```bash
+bash agent/openshell/install-key-file.sh
+```
+
+That puts the key inside the sandbox at `/sandbox/keeper/secrets/tokenfactory.key` (mode 600). The network rule still only lets `/opt/hermes/.venv/bin/python` call Token Factory's chat and models endpoints, and redeploys leave the file alone.
+
 Check from inside the sandbox:
 
 ```bash

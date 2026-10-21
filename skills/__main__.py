@@ -31,7 +31,8 @@ def _save_draft_copy(name: str, text: str) -> Path:
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(prog="keeper skills")
     sub = parser.add_subparsers(dest="command", required=True)
-    sub.add_parser("list")
+    lst = sub.add_parser("list")
+    lst.add_argument("--all", action="store_true", help="include Hermes's built-in skills")
     show = sub.add_parser("show")
     show.add_argument("name")
     check = sub.add_parser("check")
@@ -46,6 +47,8 @@ def main(argv=None) -> int:
         root = skills_root()
         for path, skill in iter_skills(root):
             rel = path.parent.relative_to(root)
+            if not args.all and rel.parts[:1] != ("keeper",):
+                continue
             if skill:
                 print(f"{skill.name:<32} {str(rel.parent):<20} {skill.description[:80]}")
             else:
