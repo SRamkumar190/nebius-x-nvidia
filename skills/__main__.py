@@ -45,12 +45,28 @@ def main(argv=None) -> int:
     draft.add_argument("--update", metavar="NAME")
     for name in ("teach", "keep", "drop"):
         sub.add_parser(name)
+    sub.add_parser("prompt-check", help="is Keeper's persona in the prompt Hermes used?")
     pin = sub.add_parser("pin", help="put an installed skill's rule in SOUL.md")
     pin.add_argument("name")
     args = parser.parse_args(argv)
 
     if args.command == "pin":
         print(teach_flow.pin(args.name))
+        return 0
+
+    if args.command == "prompt-check":
+        from .session import latest_system_prompt
+        from .soul import soul_paths
+        for path in soul_paths():
+            text = path.read_text(encoding="utf-8") if path.exists() else ""
+            print(f"{path}: {'missing' if not path.exists() else str(len(text)) + ' chars'}, "
+                  f"Keeper block {'yes' if 'keeper:start' in text else 'NO'}, "
+                  f"learned rules {'yes' if 'keeper:learned:start' in text else 'no'}")
+        prompt = latest_system_prompt()
+        print(f"Last session's system prompt: {len(prompt)} chars")
+        for needle in ("Your name is Keeper", "Learned rules", "/teach"):
+            print(f"  contains {needle!r}: {'yes' if needle in prompt else 'NO'}")
+        print("  starts with: " + prompt[:160].replace("\n", " "))
         return 0
 
     if args.command in ("teach", "keep", "drop"):

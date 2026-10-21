@@ -60,6 +60,7 @@ class TeachFlowTest(unittest.TestCase):
             "KEEPER_SKILLS_DIR": str(self.skills),
             "KEEPER_HERMES_STATE_DB": str(self.db),
             "HERMES_HOME": str(root / "hermes"),
+            "KEEPER_SOUL_FILES": os.pathsep.join([str(root / "SOUL.md"), str(root / "hermes" / "SOUL.md")]),
         })
         self.env.start()
 
@@ -85,8 +86,8 @@ class TeachFlowTest(unittest.TestCase):
         self.assertIn("Saved skill summary-style", teach.keep())
         self.assertTrue((self.skills / "keeper" / "summary-style" / "SKILL.md").exists())
         self.assertFalse(teach.pending_path().exists())
-        soul = (Path(os.environ["HERMES_HOME"]) / "SOUL.md").read_text()
-        self.assertIn("- **summary-style**: Use when the user asks for a summary.", soul)
+        for soul_file in os.environ["KEEPER_SOUL_FILES"].split(os.pathsep):
+            self.assertIn("- **summary-style**: Use when the user asks for a summary.", Path(soul_file).read_text())
 
     def test_drop_discards_without_installing(self):
         route_fn, _ = self.route(GOOD)

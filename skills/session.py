@@ -65,3 +65,31 @@ def last_correction(db_path: Path | None = None) -> tuple[str, str | None]:
     if correction is None:
         raise LookupError("no recent message from you to learn from")
     return correction, None
+
+
+def latest_system_prompt(db_path: Path | None = None) -> str:
+    """The system prompt Hermes stored for its most recent session."""
+    db_path = db_path or state_db_path()
+    conn = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True, timeout=5)
+    try:
+        tables = [r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")]
+        for name in tables:
+            if "fts" in name.lower():
+                continue
+            cols = [r[1] for r in conn.execute(f"PRAGMA table_info('{name}')")]
+            col = next((c for c in cols if "system" in c.lower() and "prompt" in c.lower()), None)
+            if col:
+                order = next((c for c in ("started_at", "created_at", "id") if c in cols), "rowid")
+                row = conn.execute(
+                    f"SELECT {col} FROM '{name}' WHERE {col} IS NOT NULL ORDER BY {order} DESC LIMIT 1"
+                ).fetchone()
+                if row:
+                    return row[0] or ""
+        # Fall back to the newest system message, if sessions keep it there.
+        table, order = _messages_table(conn)
+        row = conn.execute(
+            f"SELECT content FROM '{table}' WHERE role = 'system' ORDER BY {order} DESC LIMIT 1"
+        ).fetchone()
+        return _text(row[0]) if row else ""
+    finally:
+        conn.close()

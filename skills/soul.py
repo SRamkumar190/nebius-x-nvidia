@@ -17,9 +17,18 @@ HEADING = "### Learned rules\n\nThe user taught you these. Always follow them. T
 _LINE_RE = re.compile(r"^- \*\*(?P<name>[a-z0-9-]+)\*\*: ")
 
 
-def soul_path() -> Path:
+def soul_paths() -> list[Path]:
+    """Both persona files. NemoClaw keeps /sandbox/SOUL.md as the durable one and
+    appears to copy it over ~/.hermes/SOUL.md (what Hermes reads) on start,
+    so learned rules go into both."""
+    if os.environ.get("KEEPER_SOUL_FILES"):
+        return [Path(p) for p in os.environ["KEEPER_SOUL_FILES"].split(os.pathsep) if p]
     hermes_home = os.environ.get("HERMES_HOME") or str(Path.home() / ".hermes")
-    return Path(hermes_home) / "SOUL.md"
+    return [Path.home() / "SOUL.md", Path(hermes_home) / "SOUL.md"]
+
+
+def soul_path() -> Path:
+    return soul_paths()[-1]
 
 
 def _rules(text: str) -> list[str]:
@@ -30,8 +39,11 @@ def _rules(text: str) -> list[str]:
 
 
 def pin_rule(name: str, rule: str, path: Path | None = None) -> None:
-    """Add or replace the learned rule for skill `name`."""
-    path = path or soul_path()
+    """Add or replace the learned rule for skill `name` (in every persona file)."""
+    if path is None:
+        for target in soul_paths():
+            pin_rule(name, rule, target)
+        return
     text = path.read_text(encoding="utf-8") if path.exists() else ""
     rules = [l for l in _rules(text) if _LINE_RE.match(l)["name"] != name]
     rules.append(f"- **{name}**: {' '.join(rule.split())}")
