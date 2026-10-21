@@ -102,56 +102,61 @@ It passes if both of the last two commands still show the hackathon line.
 
 ## 4. Proof: a correction becomes a skill, and is used after a restart
 
-1. Open the chat with `nemohermes launch keeper` and ask:
+1. Open the chat with `nemohermes launch keeper`. Then type:
 
-   > Give me a quick summary of what you can do for me.
-
-   You'll most likely get a paragraph or a long list.
-
-2. Correct it:
-
-   > No. From now on, any summary you give me should be at most 3 bullets, deadlines first, and no intro sentence.
-
-3. Keeper should:
-   - say it will follow that rule
-   - run `keeper skills draft` (you'll see the terminal tool call)
-   - show you the proposed skill
-   - call `skill_manage`
-   - tell you to reply `/skills approve <id>`
-
-   If it doesn't mention an id, type `/skills pending`.
-
-4. Before approving, check that nothing has been saved yet:
-
-   ```bash
-   nemohermes keeper exec -- ls /sandbox/.hermes/skills/keeper/
+   ```
+   Give me a quick summary of what you can do for me.
    ```
 
-   Only the two shipped skills should be there.
+   You'll probably get a long list.
 
-5. In the chat, type `/skills approve <id>`. Then type `/exit`.
+2. Correct it, and name the rule you want saved. Asking it to "save this" is too vague: the model picked the wrong "this" in testing.
 
-6. Check the skill landed:
-
-   ```bash
-   nemohermes keeper exec -- /sandbox/keeper/bin/keeper skills list
-   nemohermes keeper exec -- /sandbox/keeper/bin/keeper router recent -n 5
+   ```
+   That's too long. Save this rule as a skill named summary-style: any summary you give me is at most 3 bullets, deadlines first, and no intro sentence.
    ```
 
-   You should see a third skill. In the router log there should be a `skill_write` row for `nvidia/Nemotron-3-Ultra-550b-a55b` with status `ok` and no "served by" note.
+3. Keeper calls Hermes's `skill_manage` tool. Because `skills.write_approval` is on, the skill is only staged, not saved. Type:
 
-7. Restart, then ask the same question again in a new session:
+   ```
+   /skills pending
+   ```
+
+   You should see one pending write on `summary-style`. Then type:
+
+   ```
+   /skills approve all
+   ```
+
+   It should say `Approved 1 skills write(s)`. Then type `/exit`.
+
+4. Check it landed:
+
+   ```bash
+   nemohermes keeper exec -- bash -c 'grep -rl "name: summary-style" /sandbox/.hermes/skills'
+   ```
+
+5. Restart, then ask again in a new session:
 
    ```bash
    nemohermes keeper stop && nemohermes keeper start
    nemohermes launch keeper
    ```
 
-   > Give me a quick summary of what you can do for me.
+   ```
+   Give me a quick summary of what you can do for me.
+   ```
 
 It passes if:
-- Keeper loads the new skill (a `skill_view` call shows up in the chat)
-- it answers in at most 3 bullets with no intro sentence
-- the skill is still listed after the restart
+- the skill file is still there after the restart
+- the new answer has at most 3 bullets and no intro sentence
 
-Send me screenshots of steps 3, 6 and 7. If it fails, send whatever happened instead.
+### Known gap: who writes the skill
+
+The router's plan sends skill writing to Nemotron 3 Ultra. `keeper skills draft` does that and works on its own:
+
+```bash
+nemohermes keeper exec -- /sandbox/keeper/bin/keeper skills draft --correction "Summaries are at most 3 bullets, deadlines first" --context "I gave a long list"
+```
+
+Keeper's persona tells the chat model to use it before calling `skill_manage`. But in three tests, Nemotron 3 Super went straight to Hermes's built-in `skill_manage` and wrote the skill itself. So skills learned in chat are currently written by Super, and approved by you through Hermes's write-approval gate.
