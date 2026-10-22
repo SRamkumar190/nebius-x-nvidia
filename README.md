@@ -7,7 +7,7 @@ It runs as a Hermes agent inside NVIDIA OpenShell, set up with NemoClaw. Inferen
 ## Status
 
 - **Phase 1, feasibility:** done. The verdict was go; see [docs/phase1-report.md](docs/phase1-report.md).
-- **Phase 2, the working assistant:** in progress, due October 21, 2026.
+- **Phase 2, the working assistant:** in progress. Items 1 to 3 are done: repo scaffold, model router, and memory and skills ([item 3 report](docs/phase2-item3-report.md)). Next are inbox and calendar triage, the opportunity radar, and the OpenShell network policy.
 
 ## Layout
 
