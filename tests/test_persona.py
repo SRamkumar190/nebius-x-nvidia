@@ -2,6 +2,8 @@ import contextlib
 import io
 import os
 import sqlite3
+import subprocess
+import sys
 import tempfile
 import textwrap
 import unittest
@@ -39,6 +41,39 @@ FAKE_PROMPT_BUILDER = textwrap.dedent('''
             return None
         return _scan_context_content(path.read_text(encoding="utf-8").strip(), "SOUL.md")
 ''')
+
+
+FAKE_HERMES = {
+    "agent/__init__.py": "",
+    "agent/prompt_builder.py": "def load_soul_md():\n    return '## Keeper\\n\\nYour name is Keeper.'\n",
+    "run_agent.py": textwrap.dedent('''
+        from agent.prompt_builder import load_soul_md
+
+        class AIAgent:
+            def __init__(self, skip_context_files=False, skip_memory=False, platform=None):
+                self.prompt = self._build_system_prompt()
+
+            def _build_system_prompt(self):
+                soul = None if self.__dict__.get("skip", False) else load_soul_md()
+                return soul or "You are Hermes Agent, built by Nous Research."
+    '''),
+    "hermes_cli/__init__.py": "",
+    "hermes_cli/main.py": textwrap.dedent('''
+        import os
+        import sys
+        from run_agent import AIAgent
+
+        def _quiet_mode():
+            os.environ["HERMES_IGNORE_RULES"] = "1"
+
+        def main():
+            _quiet_mode()
+            agent = AIAgent(skip_context_files=True, skip_memory=True, platform="cli")
+            print("answer: " + agent.prompt.splitlines()[0])
+            print("argv: " + " ".join(sys.argv[1:]))
+            return 0
+    '''),
+}
 
 
 class PinTest(unittest.TestCase):
@@ -200,6 +235,22 @@ class PromptCheckTest(unittest.TestCase):
         with contextlib.redirect_stdout(out):
             self.assertEqual(promptcheck.run(), 0)
         self.assertIn("couldn't read Hermes's session log", out.getvalue())
+
+    def test_trace_reports_env_writes_agent_flags_and_prompt(self):
+        src = Path(self.tmp.name) / "trace-src"
+        for rel, body in FAKE_HERMES.items():
+            (src / rel).parent.mkdir(parents=True, exist_ok=True)
+            (src / rel).write_text(body)
+        trace = Path(promptcheck.__file__).with_name("hermes_trace.py")
+        env = dict(os.environ, KEEPER_HERMES_SRC=str(src))
+        done = subprocess.run([sys.executable, "-I", str(trace), "What is your name?"],
+                              capture_output=True, text=True, env=env, timeout=60)
+        self.assertEqual(done.returncode, 0, done.stderr)
+        self.assertIn("argv: chat --oneshot -q What is your name?", done.stdout)
+        self.assertIn("os.environ['HERMES_IGNORE_RULES'] = '1' at main.py:7 _quiet_mode <- main.py:10 main", done.stderr)
+        self.assertIn("AIAgent(skip_context_files=True, skip_memory=True, platform='cli')", done.stderr)
+        self.assertIn("load_soul_md returned", done.stderr)
+        self.assertIn("_build_system_prompt built a prompt starting", done.stderr)
 
     def test_verdicts(self):
         self.assertIn("refuses", promptcheck.verdict("BLOCKED: x", False, False, True))

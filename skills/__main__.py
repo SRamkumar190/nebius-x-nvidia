@@ -7,6 +7,7 @@
     keeper skills teach | keep | drop     (behind the /teach, /keep, /drop quick commands)
     keeper skills pin <name>              (put an installed skill's rule in SOUL.md)
     keeper skills prompt-check            (is Keeper's persona in Hermes's prompt?)
+    keeper skills trace-prompt ["..."]    (one traced Hermes one-shot chat: why is SOUL.md skipped?)
 
 `draft` only prints a proposal. `teach` drafts one from your last chat
 message and `keep` installs it, so nothing is saved until you say so.
@@ -48,6 +49,8 @@ def main(argv=None) -> int:
     for name in ("teach", "keep", "drop"):
         sub.add_parser(name)
     sub.add_parser("prompt-check", help="is Keeper's persona in the prompt Hermes used?")
+    trace = sub.add_parser("trace-prompt", help="run one Hermes one-shot chat and trace how its prompt is built")
+    trace.add_argument("question", nargs="?", default="In one line, what is your name?")
     pin = sub.add_parser("pin", help="put an installed skill's rule in SOUL.md")
     pin.add_argument("name")
     args = parser.parse_args(argv)
@@ -59,6 +62,11 @@ def main(argv=None) -> int:
     if args.command == "prompt-check":
         from .promptcheck import run
         return run()
+
+    if args.command == "trace-prompt":
+        # Hermes's own Python, isolated (-I) so Keeper's packages can't shadow Hermes's.
+        import subprocess
+        return subprocess.call([sys.executable, "-I", str(Path(__file__).with_name("hermes_trace.py")), args.question])
 
     if args.command in ("teach", "keep", "drop"):
         try:
