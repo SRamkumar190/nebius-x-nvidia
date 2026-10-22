@@ -35,8 +35,8 @@ FAKE_PROMPT_BUILDER = textwrap.dedent('''
             return f"[BLOCKED: {filename} contained potential prompt injection (html_comment). Content not loaded.]"
         return content
 
-    def load_soul_md():
-        path = Path(os.environ["HERMES_HOME"]) / "SOUL.md"
+    def load_soul_md(home_override=None):
+        path = Path(home_override or os.environ["HERMES_HOME"]) / "SOUL.md"
         if not path.exists():
             return None
         return _scan_context_content(path.read_text(encoding="utf-8").strip(), "SOUL.md")
@@ -110,6 +110,21 @@ class PinTest(unittest.TestCase):
             soul = Path(tmp) / "SOUL.md"
             pin_rule("zw-rule", "Use​ when‮ asked.", soul)
             self.assertIn("- **zw-rule**: Use when asked.", soul.read_text())
+
+
+class SoulPathsTest(unittest.TestCase):
+    def test_runtime_soul_is_read_last_when_nemoclaw_has_a_runtime_folder(self):
+        from skills.soul import soul_path, soul_paths
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp) / ".hermes"
+            home.mkdir()
+            env = {k: v for k, v in os.environ.items() if k != "KEEPER_SOUL_FILES"}
+            env["HERMES_HOME"] = str(home)
+            with mock.patch.dict(os.environ, env, clear=True):
+                self.assertEqual(soul_paths()[-1], home / "SOUL.md")
+                (home / "runtime").mkdir()
+                self.assertEqual(soul_path(), home / "runtime" / "SOUL.md")
+                self.assertEqual(len(soul_paths()), 3)
 
 
 class MergeTest(unittest.TestCase):
@@ -209,6 +224,14 @@ class PromptCheckTest(unittest.TestCase):
         self.soul.write_text(merge_keeper_section("", KEEPER))
         view = promptcheck.hermes_view(self.soul)
         self.assertEqual(view["scan"], "passes")
+        self.assertIn("Your name is Keeper", view["load_soul_md"])
+
+    def test_probe_asks_the_loader_about_the_files_own_folder(self):
+        runtime = self.home / "runtime"
+        runtime.mkdir()
+        (runtime / "SOUL.md").write_text(merge_keeper_section("", KEEPER))
+        view = promptcheck.hermes_view(runtime / "SOUL.md")  # HERMES_HOME's own SOUL.md doesn't exist
+        self.assertEqual(view["load_soul_md_home"], str(runtime))
         self.assertIn("Your name is Keeper", view["load_soul_md"])
 
     def test_report_flags_invisible_characters_and_html(self):

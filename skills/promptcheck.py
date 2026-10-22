@@ -86,7 +86,8 @@ def run() -> int:
     print(f"Hermes's own check of {read_by_hermes}" + (f" ({view['scanner']}):" if view.get("scanner") else ":"))
     print("  scanner: " + view.get("scan", "?"))
     if "load_soul_md" in view:
-        print(f"  load_soul_md(): {view['load_soul_md']}")
+        home = f"home_override={view['load_soul_md_home']}" if view.get("load_soul_md_home") else ""
+        print(f"  load_soul_md({home}): {view['load_soul_md']}")
     if "fallback_identity" in view:
         print(f"  built-in identity, used when SOUL.md isn't loaded: {view['fallback_identity']}")
     for err in view.get("import_errors", [])[:3]:

@@ -41,13 +41,22 @@ INVISIBLE = dict.fromkeys(
 
 
 def soul_paths() -> list[Path]:
-    """Both persona files. NemoClaw keeps /sandbox/SOUL.md as the durable one and
-    appears to copy it over ~/.hermes/SOUL.md (what Hermes reads) on start,
-    so learned rules go into both."""
+    """Every persona file Keeper keeps in sync. The last one is what Hermes reads.
+
+    - ~/SOUL.md: NemoClaw's docs call /sandbox/SOUL.md the durable persona file.
+    - $HERMES_HOME/SOUL.md: where Hermes's docs say SOUL.md lives.
+    - $HERMES_HOME/runtime/SOUL.md: where Hermes actually reads it in a NemoClaw
+      sandbox. NemoClaw keeps Hermes's state.db in runtime/, and a traced chat
+      showed load_soul_md(home_override=/sandbox/.hermes/runtime) finding nothing
+      there, so Hermes fell back to its built-in identity.
+    """
     if os.environ.get("KEEPER_SOUL_FILES"):
         return [Path(p) for p in os.environ["KEEPER_SOUL_FILES"].split(os.pathsep) if p]
-    hermes_home = os.environ.get("HERMES_HOME") or str(Path.home() / ".hermes")
-    return [Path.home() / "SOUL.md", Path(hermes_home) / "SOUL.md"]
+    hermes_home = Path(os.environ.get("HERMES_HOME") or Path.home() / ".hermes")
+    paths = [Path.home() / "SOUL.md", hermes_home / "SOUL.md"]
+    if (hermes_home / "runtime").is_dir():
+        paths.append(hermes_home / "runtime" / "SOUL.md")
+    return paths
 
 
 def soul_path() -> Path:

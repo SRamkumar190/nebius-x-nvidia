@@ -4,7 +4,7 @@ Keeper runs on the Hermes agent inside NVIDIA OpenShell, set up with NemoClaw. T
 
 | File | What it does |
 | --- | --- |
-| `SOUL.md` | Keeper's persona and hard rules. `deploy.sh` puts it at the top of `/sandbox/SOUL.md` and `/sandbox/.hermes/SOUL.md` (merge code in `skills/soul.py`) |
+| `SOUL.md` | Keeper's persona and hard rules. `deploy.sh` puts it at the top of `/sandbox/.hermes/runtime/SOUL.md` (the one Hermes reads), `/sandbox/.hermes/SOUL.md` and `/sandbox/SOUL.md` (merge code in `skills/soul.py`) |
 | `bin/keeper` | Keeper's command inside the sandbox (`keeper memory`, `keeper skills`, `keeper router`) |
 | `deploy.sh` | Copies code, skills and persona into the sandbox, turns on Hermes's skill write-approval gate and adds the `/teach`, `/keep` and `/drop` quick commands. Rerun it after changes. |
 | `restore.sh` | Puts memory, the router log, the key file and learned skills back into a re-created sandbox |

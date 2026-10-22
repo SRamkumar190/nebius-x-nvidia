@@ -22,7 +22,13 @@ WATCH_ENV = ("HERMES_IGNORE_RULES", "HERMES_SAFE_MODE", "HERMES_HOME")
 _seen_homes = set()
 
 
+_said = set()
+
+
 def _say(text):
+    if text in _said:  # a helper Hermes calls often would flood the screen
+        return
+    _said.add(text)
     sys.stderr.write("[trace] " + text + "\n")
     sys.stderr.flush()
 
@@ -76,13 +82,16 @@ def _profile(frame, event, arg):
 
 def main(argv):
     question = argv[0] if argv else "In one line, what is your name?"
-    sys.path.insert(0, os.environ.get("KEEPER_HERMES_SRC", "/opt/hermes"))
     os.environ.setdefault("HERMES_SKIP_CHMOD", "1")  # NemoClaw's hermes wrapper sets this too
     os._Environ.__setitem__ = _setitem
     threading.setprofile(_profile)
     sys.setprofile(_profile)
     sys.argv = ["hermes", "chat", "--oneshot", "-q", question]
-    from hermes_cli.main import main as hermes_main
+    try:  # Hermes's editable install already puts its source on the path, after site-packages
+        from hermes_cli.main import main as hermes_main
+    except ImportError:
+        sys.path.append(os.environ.get("KEEPER_HERMES_SRC", "/opt/hermes"))
+        from hermes_cli.main import main as hermes_main
     return hermes_main()
 
 

@@ -46,17 +46,28 @@ for dir in "$STAGE"/skills/*/; do
   echo "   $name"
 done
 
-echo "== merge the Keeper section into both persona files"
-# NemoClaw keeps /sandbox/SOUL.md as the durable persona and appears to copy
-# it over /sandbox/.hermes/SOUL.md (what Hermes reads) when the sandbox
-# starts, so both get the Keeper section. Learned rules and anything you added
-# are kept; NemoClaw's stock "You are Hermes Agent" paragraph is dropped.
+echo "== merge the Keeper section into the persona files"
+# Hermes in a NemoClaw sandbox reads /sandbox/.hermes/runtime/SOUL.md, the
+# folder NemoClaw moved state.db into (`keeper skills trace-prompt` shows the
+# load_soul_md call). NemoClaw's docs point at /sandbox/SOUL.md and Hermes's at
+# /sandbox/.hermes/SOUL.md, so Keeper keeps all three in sync. Learned rules
+# and anything you added are kept; NemoClaw's stock "You are Hermes Agent"
+# paragraph is dropped.
 mkdir -p "$HOME/keeper-backups"
-for remote_dir in /sandbox /sandbox/.hermes; do
+targets=(/sandbox /sandbox/.hermes)
+if nh exec -- test -d /sandbox/.hermes/runtime >/dev/null 2>&1; then
+  targets+=(/sandbox/.hermes/runtime)
+fi
+previous=""
+for remote_dir in "${targets[@]}"; do
   work="$STAGE/soul$(echo "$remote_dir" | tr / _)"
   mkdir -p "$work"
   if nh download "$remote_dir/SOUL.md" "$work/" >/dev/null 2>&1 && [ -f "$work/SOUL.md" ]; then
     cp "$work/SOUL.md" "$HOME/keeper-backups/SOUL$(echo "$remote_dir" | tr / _).md.$(date +%Y%m%d-%H%M%S)"
+  elif [ -n "$previous" ]; then
+    # A file that doesn't exist yet starts from the one before it, so it gets
+    # the learned rules too.
+    cp "$previous" "$work/SOUL.md"
   else
     : > "$work/SOUL.md"
   fi
@@ -64,6 +75,7 @@ for remote_dir in /sandbox /sandbox/.hermes; do
   # then learned rules and whatever else was there. See skills/soul.py.
   (cd "$ROOT" && PYTHONDONTWRITEBYTECODE=1 python3 -m skills.soul merge "$work/SOUL.md" agent/SOUL.md)
   nh upload "$work/SOUL.md" "$remote_dir/"
+  previous="$work/SOUL.md"
   echo "   $remote_dir/SOUL.md"
 done
 

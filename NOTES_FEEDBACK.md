@@ -139,3 +139,11 @@ Asked "what is Nebius Token Factory?" with no context, both models confidently d
 
     Hermes feedback: when SOUL.md is skipped, nothing says so. A line in `hermes status` or at session start such as "SOUL.md not loaded: blocked by the context scanner (finding)" would have saved most of this. It would also help if the personality docs said plainly that a persona edit only reaches new sessions, and that Telegram sessions need `/new`.
 
+25. Root cause for 21 and 24, found with `keeper skills trace-prompt`. It runs one `hermes chat --oneshot` through Hermes's own entry point with a profiler hook:
+    - The agent was built with `skip_context_files=False`, and `HERMES_IGNORE_RULES` was never set. The persona wasn't being switched off.
+    - Hermes builds the prompt with `load_soul_md(home_override=/sandbox/.hermes/runtime)`. `runtime/` is where NemoClaw keeps Hermes's session database (`/sandbox/.hermes/state.db` is a symlink to `runtime/state.db`). There's no SOUL.md in there, so the loader returned None and Hermes used its built-in "You are Hermes Agent, built by Nous Research" identity. Neither persona file the docs name gets read for the prompt: not `/sandbox/SOUL.md` (NemoClaw's docs) and not `$HERMES_HOME/SOUL.md` (Hermes's docs).
+    - My guesses in 21 (NemoClaw restoring the file on start) and 24 (a stale session, or the injection scanner) were wrong. The files were fine all along.
+    - Fix: Keeper also writes its section and learned rules to `/sandbox/.hermes/runtime/SOUL.md`.
+
+    Feedback: SOUL.md should be read where both projects document it, or the runtime path should be documented. My guess is that Hermes derives `home_override` from where `state.db` really lives, and NemoClaw's symlink moves that. If so, any NemoClaw Hermes sandbox silently ignores its persona, and anything else Hermes reads relative to that home may be affected too. I haven't checked memory. Also, when `load_soul_md` finds nothing, Hermes should log the path it tried. A missing persona fails silently today, and it took a profiler to find out why.
+

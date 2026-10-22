@@ -20,8 +20,8 @@ Run `git pull` in PowerShell first, so the new files are there.
 | Router call log | `/sandbox/keeper/data/router.db` | same |
 | Skills, shipped and learned | `/sandbox/.hermes/skills/keeper/<name>/SKILL.md` | same. Hermes loads them on its own. |
 | Skill changes waiting for approval | `/sandbox/.hermes/pending/skills/` | Hermes keeps staged writes across restarts |
-| Keeper persona | the Keeper section at the top of `/sandbox/SOUL.md` and `/sandbox/.hermes/SOUL.md` | same |
-| Learned rules, one line per learned skill | right under the Keeper section in both SOUL.md files | same |
+| Keeper persona | the Keeper section at the top of `/sandbox/.hermes/runtime/SOUL.md`, the file Hermes actually reads, with copies in `/sandbox/SOUL.md` and `/sandbox/.hermes/SOUL.md` | same |
+| Learned rules, one line per learned skill | right under the Keeper section in all three SOUL.md files | same |
 
 The learning loop goes like this:
 
@@ -71,7 +71,7 @@ nemohermes keeper stop && nemohermes keeper start
 The deploy script:
 - copies the code and the `keeper` command into `/sandbox/keeper/`
 - installs the two Keeper skills
-- puts the Keeper section at the top of both SOUL.md files. Learned rules and anything you added stay. NemoClaw's stock "You are Hermes Agent" paragraph is dropped, because it contradicts Keeper's name. A backup of each file goes to `~/keeper-backups/` first.
+- puts the Keeper section at the top of all three SOUL.md files. Hermes reads `/sandbox/.hermes/runtime/SOUL.md`, the folder NemoClaw moved Hermes's session database into; the other two are where the NemoClaw and Hermes docs say the persona lives. Learned rules and anything you added stay. NemoClaw's stock "You are Hermes Agent" paragraph is dropped, because it contradicts Keeper's name. A backup of each file goes to `~/keeper-backups/` first.
 - turns on `skills.write_approval`
 - adds the `/teach`, `/keep` and `/drop` quick commands
 - lets terminal commands see the Token Factory placeholder (`terminal.env_passthrough`). Hermes strips key-like variables from terminal commands by default.
@@ -109,7 +109,7 @@ It prints three things:
 - what Hermes's own prompt-injection scanner and SOUL.md loader say about the file Hermes reads. Hermes skips a SOUL.md it thinks is an injection attempt and uses its built-in "You are Hermes Agent" identity instead.
 - what the system prompt of your latest chat contains
 
-The last line is the verdict. "Keeper's persona is in the prompt" means it works. "No conversation since SOUL.md last changed" means the latest chat started before the deploy, so start a new one and run it again. Anything else, send me the whole output.
+The last line is the verdict. "Keeper's persona is in the prompt" means it works. If it doesn't, run `nemohermes keeper exec -- /sandbox/keeper/bin/keeper skills trace-prompt`. It runs one traced one-shot chat and prints which SOUL.md Hermes tried to load and what it got back. "No conversation since SOUL.md last changed" means the latest chat started before the deploy, so start a new one and run it again. Anything else, send me the whole output.
 
 Telegram and other gateway sessions don't restart on their own, so send `/new` there after a deploy.
 

@@ -13,6 +13,7 @@ import importlib
 import inspect
 import json
 import os
+import pathlib
 import sys
 
 SKIP_DIRS = {"node_modules", "tests", "web", "ui-tui", "website", "docs", "skills",
@@ -104,11 +105,21 @@ def probe(soul_path, root):
             out["fallback_identity"] = _short(identity, 120)
         loader = getattr(module, "load_soul_md", None)
         if callable(loader) and _required_args(loader) == 0:
+            # Chats call load_soul_md(home_override=<folder>); ask about the
+            # folder this file is in, the way they do.
+            kwargs = {}
             try:
-                loaded = loader()
+                if "home_override" in inspect.signature(loader).parameters:
+                    kwargs["home_override"] = pathlib.Path(soul_path).parent
+            except (TypeError, ValueError):
+                pass
+            try:
+                loaded = loader(**kwargs)
                 out["load_soul_md"] = None if loaded is None else f"{len(loaded)} chars: {_short(loaded, 120)}"
             except Exception as exc:
                 out["load_soul_md"] = f"error: {exc.__class__.__name__}: {_short(exc, 160)}"
+            if kwargs:
+                out["load_soul_md_home"] = str(kwargs["home_override"])
         return out
     out["scan"] = f"couldn't find Hermes's scanner under {root}"
     return out
