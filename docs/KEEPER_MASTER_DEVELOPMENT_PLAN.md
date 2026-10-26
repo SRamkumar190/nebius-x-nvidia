@@ -107,11 +107,11 @@ These are initial assignments, **not assertions about unverified individual spec
 3. Define `Opportunity`: canonical URL, organization, title, source, discovery time, score, explanation, eligibility, deadline, and stable deduplication key.-
 4. Define `Application`: opportunity reference, status (`found`, `applied`, `interview`, `decision`), status history, source email IDs, timestamps, and manual override metadata.-
 5. Define `DeadlineEvent`, `DraftRecord`, `NotificationRecord`, `SecurityEvent`, and `CorrectionRecord` with stable identifiers.-
-6. Specify UTC storage and timezone-aware display; represent unknown dates explicitly rather than inventing dates.
-7. Create SQLite schema and migration/bootstrap scripts for `data/keeper.db`; add unique indexes for email IDs, canonical opportunities, and provider event mappings.
-8. Specify allowed state transitions, precedence rules, deduplication semantics, and idempotency keys.
-9. Define adapter interfaces and error types for Gmail, Calendar, Telegram, Tavily, and model calls; create fakes with deterministic fixtures.
-10. Add schema-validation, migration, duplicate-processing, and state-transition tests; publish JSON examples for other developers.
+6. Specify UTC storage and timezone-aware display; represent unknown dates explicitly rather than inventing dates.-
+7. Create SQLite schema and migration/bootstrap scripts for `data/keeper.db`; add unique indexes for email IDs, canonical opportunities, and provider event mappings.-
+8. Specify allowed state transitions, precedence rules, deduplication semantics, and idempotency keys.-
+9. Define adapter interfaces and error types for Gmail, Calendar, Telegram, Tavily, and model calls; create fakes with deterministic fixtures.-
+10. Add schema-validation, migration, duplicate-processing, and state-transition tests; publish JSON examples for other developers.-
 
 **Definition of done:** All five lanes can code against stable interfaces with no live API calls. Changes to contracts require review and migration notes.
 

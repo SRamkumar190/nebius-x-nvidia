@@ -30,6 +30,16 @@ def migrate(db_path: Path, *, migrations_dir: Path = MIGRATIONS) -> int:
         version = conn.execute("PRAGMA user_version").fetchone()[0]
         if version > len(files):
             raise ValueError(f"database version {version} is newer than this code ({len(files)})")
+        if version >= 1:
+            legacy = conn.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table' AND sql LIKE ? LIMIT 1",
+                ("%LIKE '*Z'%",),
+            ).fetchone()
+            if legacy:
+                raise ValueError(
+                    f"database has the older version 1 timestamp checks in {legacy[0]}; "
+                    "back up and rebuild this development database before continuing"
+                )
         for number, path in enumerate(files, 1):
             if number <= version:
                 continue

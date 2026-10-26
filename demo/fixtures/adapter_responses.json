@@ -1,0 +1,49 @@
+{
+  "emails": [
+    {
+      "id": "gmail:demo-001",
+      "provider": "gmail",
+      "provider_id": "demo-001",
+      "thread_id": "thread-001",
+      "sender": "recruiting@example.test",
+      "subject": "Interview invitation",
+      "received_at": "2026-10-26T12:00:00.000000Z",
+      "body_excerpt": "Please choose an interview time.",
+      "labels": ["INBOX"],
+      "raw_link_reference": "gmail:demo-001"
+    },
+    {
+      "id": "gmail:demo-002",
+      "provider": "gmail",
+      "provider_id": "demo-002",
+      "thread_id": "thread-002",
+      "sender": "programs@example.test",
+      "subject": "Application deadline extended",
+      "received_at": "2026-10-27T12:00:00.000000Z",
+      "body_excerpt": "The closing date has moved to November 2 at 23:59 UTC.",
+      "labels": ["INBOX"],
+      "raw_link_reference": "gmail:demo-002"
+    }
+  ],
+  "search_results": {
+    "software internship 2027": [
+      {
+        "url": "https://careers.example.test/internships/123?utm_source=demo",
+        "title": "Software Engineering Intern",
+        "snippet": "Student internship opening; eligibility details on application page.",
+        "source": "careers.example.test"
+      }
+    ]
+  },
+  "model_answers": {
+    "triage": {
+      "content": "{\"bucket\":\"actionable\",\"reason\":\"Interview invitation\"}",
+      "metadata": {
+        "requested_model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+        "served_model": "nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B",
+        "prompt_version": "fixture-v1",
+        "router_call_id": "fixture:call-1"
+      }
+    }
+  }
+}

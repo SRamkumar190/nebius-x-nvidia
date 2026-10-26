@@ -89,10 +89,35 @@ class KeeperDatabaseTest(unittest.TestCase):
                 (STAMP,),
             )
 
+    def test_schema_rejects_invalid_bucket_and_non_utc_timestamp(self):
+        self.email()
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.conn.execute(
+                "INSERT INTO triage_results(id, email_id, bucket, reason, classified_at) VALUES ('bad', 'gmail:1', 'spam', 'x', ?)",
+                (STAMP,),
+            )
+        with self.assertRaises(sqlite3.IntegrityError):
+            self.conn.execute(
+                "INSERT INTO triage_results(id, email_id, reason, classified_at) VALUES ('bad', 'gmail:1', 'x', ?)",
+                ("2026-10-26T12:00:00+02:00",),
+            )
+        self.conn.execute(
+            "INSERT INTO triage_results(id, email_id, reason, classified_at) VALUES ('good', 'gmail:1', 'x', ?)",
+            (STAMP,),
+        )
+
     def test_rejects_database_from_newer_code(self):
         self.conn.execute("PRAGMA user_version = 99")
         with self.assertRaisesRegex(ValueError, "newer"):
             migrate(self.db)
+
+    def test_detects_early_version_one_timestamp_checks(self):
+        legacy = Path(self.tmp.name) / "legacy.db"
+        with sqlite3.connect(legacy) as conn:
+            conn.execute("CREATE TABLE old_email (received_at TEXT CHECK (received_at LIKE '*Z'))")
+            conn.execute("PRAGMA user_version = 1")
+        with self.assertRaisesRegex(ValueError, "older version 1 timestamp checks"):
+            migrate(legacy)
 
     def test_failed_migration_does_not_advance_version_or_leave_tables(self):
         directory = Path(self.tmp.name) / "migrations"
