@@ -102,11 +102,11 @@ These are initial assignments, **not assertions about unverified individual spec
 **Depends on:** Phase 0  
 **Output:** `docs/contracts.md`, typed contracts, database migrations
 
-1. Define canonical `EmailRecord` fields: provider ID, thread ID, sender, subject, received timestamp, body excerpt, labels, raw-link reference, and ingestion metadata.
-2. Define `TriageResult`: bucket (`junk`, `actionable`, `due`, `newsletter`), reason, career flag, scam signals, extracted deadline, confidence, and model metadata.
-3. Define `Opportunity`: canonical URL, organization, title, source, discovery time, score, explanation, eligibility, deadline, and stable deduplication key.
-4. Define `Application`: opportunity reference, status (`found`, `applied`, `interview`, `decision`), status history, source email IDs, timestamps, and manual override metadata.
-5. Define `DeadlineEvent`, `DraftRecord`, `NotificationRecord`, `SecurityEvent`, and `CorrectionRecord` with stable identifiers.
+1. Define canonical `EmailRecord` fields: provider ID, thread ID, sender, subject, received timestamp, body excerpt, labels, raw-link reference, and ingestion metadata.-
+2. Define `TriageResult`: bucket (`junk`, `actionable`, `due`, `newsletter`), reason, career flag, scam signals, extracted deadline, confidence, and model metadata.-
+3. Define `Opportunity`: canonical URL, organization, title, source, discovery time, score, explanation, eligibility, deadline, and stable deduplication key.-
+4. Define `Application`: opportunity reference, status (`found`, `applied`, `interview`, `decision`), status history, source email IDs, timestamps, and manual override metadata.-
+5. Define `DeadlineEvent`, `DraftRecord`, `NotificationRecord`, `SecurityEvent`, and `CorrectionRecord` with stable identifiers.-
 6. Specify UTC storage and timezone-aware display; represent unknown dates explicitly rather than inventing dates.
 7. Create SQLite schema and migration/bootstrap scripts for `data/keeper.db`; add unique indexes for email IDs, canonical opportunities, and provider event mappings.
 8. Specify allowed state transitions, precedence rules, deduplication semantics, and idempotency keys.
