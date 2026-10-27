@@ -124,8 +124,8 @@ class FakeTavily:
     results_by_query: dict[str, tuple[SearchHit, ...]]
 
     def search(self, query: str, *, limit: int = 5) -> tuple[SearchHit, ...]:
-        if limit < 1:
-            raise ValueError("limit must be positive")
+        if not query.strip() or not 1 <= limit <= 20:
+            raise ValueError("query and limit between 1 and 20 are required")
         return self.results_by_query.get(query, ())[:limit]
 
 
