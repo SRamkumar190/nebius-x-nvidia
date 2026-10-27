@@ -10,6 +10,7 @@ import binascii
 import hashlib
 import json
 import time
+from html.parser import HTMLParser
 from datetime import datetime, timezone
 from email import policy
 from email.message import EmailMessage
@@ -70,6 +71,43 @@ def _plain_body(part: dict) -> str | None:
         return binary.decode(charset, errors="replace")
     except LookupError as exc:
         raise InvalidProviderResponse("Gmail returned unknown message charset") from exc
+
+
+class _HTMLText(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.text = []
+        self.hidden = 0
+
+    def handle_starttag(self, tag, attrs):
+        if tag in ("script", "style"):
+            self.hidden += 1
+        elif tag in ("p", "br", "div"):
+            self.text.append("\n")
+
+    def handle_endtag(self, tag):
+        if tag in ("script", "style") and self.hidden:
+            self.hidden -= 1
+
+    def handle_data(self, data):
+        if not self.hidden:
+            self.text.append(data)
+
+
+def _html_body(part):
+    if part.get("filename"):
+        return None
+    for child in part.get("parts", []):
+        result = _html_body(child)
+        if result is not None:
+            return result
+    if part.get("mimeType") == "text/html":
+        text = _plain_body({**part, "mimeType": "text/plain"})
+        if text is not None:
+            parser = _HTMLText()
+            parser.feed(text)
+            return "".join(parser.text).strip()
+    return None
 
 
 def _http_status(exc: Exception) -> int | None:
@@ -166,7 +204,7 @@ class LiveGmail:
                 raise AdapterError(f"Gmail request failed (HTTP {status})") from exc
         raise AssertionError("unreachable retry state")
 
-    def list_emails(self, *, cursor: str | None = None, limit: int = 50) -> EmailPage:
+    def list_message_ids(self, *, cursor: str | None = None, limit: int = 50):
         if not 1 <= limit <= 500:
             raise ValueError("limit must be between 1 and 500")
         params = {"userId": "me", "labelIds": ["INBOX"], "maxResults": limit}
@@ -179,11 +217,14 @@ class LiveGmail:
         if any(not isinstance(item, dict) or not isinstance(item.get("id"), str) or not item["id"]
                for item in refs):
             raise InvalidProviderResponse("Gmail message page contains an invalid ID")
-        records = tuple(self.read_email(f"gmail:{item['id']}").record for item in refs)
         next_cursor = page.get("nextPageToken")
         if next_cursor is not None and not isinstance(next_cursor, str):
             raise InvalidProviderResponse("Gmail returned an invalid page token")
-        return EmailPage(records, next_cursor)
+        return tuple(item['id'] for item in refs), next_cursor
+
+    def list_emails(self, *, cursor: str | None = None, limit: int = 50) -> EmailPage:
+        ids, next_cursor = self.list_message_ids(cursor=cursor, limit=limit)
+        return EmailPage(tuple(self.read_email(f"gmail:{item}").record for item in ids), next_cursor)
 
     def read_email(self, email_id: str) -> ReadEmail:
         provider_id = _provider_id(email_id)
@@ -197,6 +238,8 @@ class LiveGmail:
         except (TypeError, ValueError, OverflowError) as exc:
             raise InvalidProviderResponse("Gmail returned invalid internalDate") from exc
         plain = _plain_body(message.get("payload", {}))
+        if plain is None:
+            plain = _html_body(message.get("payload", {}))
         snippet = message.get("snippet", "")
         if not isinstance(snippet, str):
             raise InvalidProviderResponse("Gmail returned invalid snippet")

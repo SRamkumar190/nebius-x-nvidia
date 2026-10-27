@@ -144,16 +144,16 @@ These are initial assignments, **not assertions about unverified individual spec
 **Depends on:** Phases 1–2  
 **Output:** Seeded, repeatable, two-week demo inbox
 
-1. Design roughly 30 synthetic emails spanning two weeks with balanced examples of junk, actionable, due, and newsletter categories.
-2. Include internship offers, application confirmations, interview invitations, rejections, deadline reminders, extensions, hackathons, admissions/program notices, and routine newsletters.
-3. Include ambiguous career emails to exercise the rule that career-related messages cannot be automatically classified as junk.
-4. Include scam-pattern messages: upfront fees, suspicious sender-domain mismatches, unrealistic pay, and urgency language.
-5. Include one clearly labeled prompt-injection email that attempts unauthorized exfiltration to a controlled, non-allowlisted test endpoint; never use real sensitive data.
-6. Record gold labels, expected extracted deadlines, expected application transitions, scam flags, and scenario notes in versioned fixtures.
-7. Build a deterministic seeding script using the demo-only permitted mechanism; separate it from Keeper's production/runtime credentials.
-8. Build an ingestion service that stores Gmail message IDs, normalizes dates, skips already-seen messages, and records processing outcomes.
-9. Add tests for malformed email, missing subject, duplicate delivery, quoted replies, HTML/plaintext variants, and partial API failures.
-10. Provide a `reset-demo` procedure that restores the initial state without deleting developer credentials or unrelated data.
+1. Design roughly 30 synthetic emails spanning two weeks with balanced examples of junk, actionable, due, and newsletter categories. - 
+2. Include internship offers, application confirmations, interview invitations, rejections, deadline reminders, extensions, hackathons, admissions/program notices, and routine newsletters. - 
+3. Include ambiguous career emails to exercise the rule that career-related messages cannot be automatically classified as junk. - 
+4. Include scam-pattern messages: upfront fees, suspicious sender-domain mismatches, unrealistic pay, and urgency language. - 
+5. Include one clearly labeled prompt-injection email that attempts unauthorized exfiltration to a controlled, non-allowlisted test endpoint; never use real sensitive data. - 
+6. Record gold labels, expected extracted deadlines, expected application transitions, scam flags, and scenario notes in versioned fixtures.-
+7. Build a deterministic seeding script using the demo-only permitted mechanism; separate it from Keeper's production/runtime credentials.-
+8. Build an ingestion service that stores Gmail message IDs, normalizes dates, skips already-seen messages, and records processing outcomes.-
+9. Add tests for malformed email, missing subject, duplicate delivery, quoted replies, HTML/plaintext variants, and partial API failures.-
+10. Provide a `reset-demo` procedure that restores the initial state without deleting developer credentials or unrelated data.-
 
 **Definition of done:** A fresh sandbox can seed and ingest the same fixture set, producing stable IDs and expected counts without duplicates.
 

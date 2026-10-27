@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "synthetic": true,
   "window_start": "2026-10-12",
   "window_end": "2026-10-25",
@@ -27,7 +27,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Unrequested prize",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Unsolicited prize with a payment demand; flag fee and urgency signals.",
+        "scam_flag": true,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -51,7 +55,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Lottery notice",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Unsolicited lottery with a release fee; flag without asserting proven fraud.",
+        "scam_flag": true,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -73,7 +81,19 @@
         "deadline": null,
         "application_transition": "applied",
         "scenario": "Application confirmation",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Receipt confirms submission and moves a found application to applied.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": {
+          "application_id": "demo-application-029",
+          "from_status": "found",
+          "to_status": "applied",
+          "decision_outcome": null,
+          "source_email_id": "demo-email-029",
+          "history_entries_added": 1,
+          "replay_history_entries_added": 0
+        }
       }
     },
     {
@@ -95,7 +115,11 @@
         "deadline": "2026-10-15T14:43:00Z",
         "application_transition": null,
         "scenario": "Deadline reminder",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Extract the explicit UTC closing instant; a reminder does not prove submission.",
+        "scam_flag": false,
+        "deadline_evidence": "2026-10-15T14:43:00Z",
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -117,7 +141,11 @@
         "deadline": "2026-10-15T14:57:00Z",
         "application_transition": null,
         "scenario": "Hackathon registration",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Extract the explicit registration cutoff; invitation does not prove registration.",
+        "scam_flag": false,
+        "deadline_evidence": "2026-10-15T14:57:00Z",
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -139,7 +167,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Engineering reading list",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Routine reading material requires no personal action.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -164,7 +196,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Account alert",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Claimed shop identity conflicts with the login host; do not follow the verification instruction.",
+        "scam_flag": true,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -186,7 +222,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Unsolicited promotion",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Unrequested retail promotion with no career relevance or personal obligation.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -208,7 +248,19 @@
         "deadline": null,
         "application_transition": "interview",
         "scenario": "Interview invitation",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Explicit interview invitation advances an applied application to interview.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": {
+          "application_id": "demo-application-030",
+          "from_status": "applied",
+          "to_status": "interview",
+          "decision_outcome": null,
+          "source_email_id": "demo-email-030",
+          "history_entries_added": 1,
+          "replay_history_entries_added": 0
+        }
       }
     },
     {
@@ -230,8 +282,11 @@
         "deadline": "2026-10-16T14:44:00Z",
         "application_transition": null,
         "scenario": "Deadline extended",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential. Update the existing event; do not create a second deadline.",
-        "previous_deadline": "2026-10-14T14:44:00Z"
+        "notes": "Replace the existing deadline with the explicit later instant; retain the event ID and application status.",
+        "previous_deadline": "2026-10-14T14:44:00Z",
+        "scam_flag": false,
+        "deadline_evidence": "2026-10-16T14:44:00Z",
+        "expected_application_change": null
       }
     },
     {
@@ -253,7 +308,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Campus weekly",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "General campus information has no personal task or upcoming deadline.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -275,7 +334,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Career office bulletin",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Informational career newsletter remains newsletter; career protection only prevents junk.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -299,7 +362,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Lottery notice",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Unsolicited lottery with a release fee; flag without asserting proven fraud.",
+        "scam_flag": true,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -324,7 +391,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Unrequested prize",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Unsolicited prize with a payment demand; flag fee and urgency signals.",
+        "scam_flag": true,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -346,7 +417,19 @@
         "deadline": null,
         "application_transition": "decision",
         "scenario": "Application rejection",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Explicit rejection records a decision with rejected outcome.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": {
+          "application_id": "demo-application-031",
+          "from_status": "applied",
+          "to_status": "decision",
+          "decision_outcome": "rejected",
+          "source_email_id": "demo-email-031",
+          "history_entries_added": 1,
+          "replay_history_entries_added": 0
+        }
       }
     },
     {
@@ -368,7 +451,11 @@
         "deadline": "2026-10-17T14:45:00Z",
         "application_transition": null,
         "scenario": "Hackathon registration",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Extract the explicit registration cutoff; invitation does not prove registration.",
+        "scam_flag": false,
+        "deadline_evidence": "2026-10-17T14:45:00Z",
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -390,7 +477,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Engineering reading list",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Routine reading material requires no personal action.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -412,7 +503,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Campus weekly",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "General campus information has no personal task or upcoming deadline.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -434,7 +529,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Unsolicited promotion",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Unrequested retail promotion with no career relevance or personal obligation.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -459,7 +558,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Account alert",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Claimed shop identity conflicts with the login host; do not follow the verification instruction.",
+        "scam_flag": true,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -481,7 +584,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "A possible next step",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Career relevance is plausible despite weak context; keep reviewable rather than auto-junk.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -503,7 +610,11 @@
         "deadline": "2026-10-18T14:46:00Z",
         "application_transition": null,
         "scenario": "Admissions program notice",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Acceptance response is due, but no acceptance or application-state change has occurred.",
+        "scam_flag": false,
+        "deadline_evidence": "2026-10-18T14:46:00Z",
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -525,7 +636,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Career office bulletin",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Informational career newsletter remains newsletter; career protection only prevents junk.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -547,7 +662,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Engineering reading list",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Routine reading material requires no personal action.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -572,7 +691,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Unrequested prize",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Unsolicited prize with a payment demand; flag fee and urgency signals.",
+        "scam_flag": true,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -596,7 +719,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Lottery notice",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Unsolicited lottery with a release fee; flag without asserting proven fraud.",
+        "scam_flag": true,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -618,7 +745,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Career digest or opportunity?",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Ambiguous personal career opportunity requires review; do not auto-junk.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -640,7 +771,11 @@
         "deadline": "2026-10-19T14:47:00Z",
         "application_transition": null,
         "scenario": "Deadline reminder",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Extract the explicit UTC closing instant; a reminder does not prove submission.",
+        "scam_flag": false,
+        "deadline_evidence": "2026-10-19T14:47:00Z",
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -662,7 +797,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Campus weekly",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "General campus information has no personal task or upcoming deadline.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -684,7 +823,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Career office bulletin",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Informational career newsletter remains newsletter; career protection only prevents junk.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -709,7 +852,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Account alert",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Claimed shop identity conflicts with the login host; do not follow the verification instruction.",
+        "scam_flag": true,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -731,7 +878,19 @@
         "deadline": null,
         "application_transition": "decision",
         "scenario": "Internship offer",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Explicit offer is a decision, not evidence that the student accepted it.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": {
+          "application_id": "demo-application-020",
+          "from_status": "interview",
+          "to_status": "decision",
+          "decision_outcome": "offer",
+          "source_email_id": "demo-email-020",
+          "history_entries_added": 1,
+          "replay_history_entries_added": 0
+        }
       }
     },
     {
@@ -756,7 +915,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Internship placement fee",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Career protection applies despite fee and urgency signals; do not pay or infer an application transition.",
+        "scam_flag": true,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -778,8 +941,11 @@
         "deadline": "2026-10-20T14:48:00Z",
         "application_transition": null,
         "scenario": "Deadline extended",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential. Update the existing event; do not create a second deadline.",
-        "previous_deadline": "2026-10-18T14:48:00Z"
+        "notes": "Replace the existing deadline with the explicit later instant; retain the event ID and application status.",
+        "previous_deadline": "2026-10-18T14:48:00Z",
+        "scam_flag": false,
+        "deadline_evidence": "2026-10-20T14:48:00Z",
+        "expected_application_change": null
       }
     },
     {
@@ -801,7 +967,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Engineering reading list",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Routine reading material requires no personal action.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -825,7 +995,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Lottery notice",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Unsolicited lottery with a release fee; flag without asserting proven fraud.",
+        "scam_flag": true,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -847,7 +1021,19 @@
         "deadline": null,
         "application_transition": "applied",
         "scenario": "Application confirmation",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Receipt confirms submission and moves a found application to applied.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": {
+          "application_id": "demo-application-021",
+          "from_status": "found",
+          "to_status": "applied",
+          "decision_outcome": null,
+          "source_email_id": "demo-email-021",
+          "history_entries_added": 1,
+          "replay_history_entries_added": 0
+        }
       }
     },
     {
@@ -873,7 +1059,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Extraordinary internship pay",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Career protection applies despite unrealistic pay, mismatched identity, and urgency; require review.",
+        "scam_flag": true,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -895,7 +1085,11 @@
         "deadline": "2026-10-21T14:49:00Z",
         "application_transition": null,
         "scenario": "Hackathon registration",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Extract the explicit registration cutoff; invitation does not prove registration.",
+        "scam_flag": false,
+        "deadline_evidence": "2026-10-21T14:49:00Z",
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -917,7 +1111,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Career office bulletin",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Informational career newsletter remains newsletter; career protection only prevents junk.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -939,7 +1137,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Unsolicited promotion",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Unrequested retail promotion with no career relevance or personal obligation.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -961,7 +1163,19 @@
         "deadline": null,
         "application_transition": "interview",
         "scenario": "Interview invitation",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Explicit interview invitation advances an applied application to interview.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": {
+          "application_id": "demo-application-022",
+          "from_status": "applied",
+          "to_status": "interview",
+          "decision_outcome": null,
+          "source_email_id": "demo-email-022",
+          "history_entries_added": 1,
+          "replay_history_entries_added": 0
+        }
       }
     },
     {
@@ -983,7 +1197,19 @@
         "deadline": null,
         "application_transition": "decision",
         "scenario": "Internship offer",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Explicit offer is a decision, not evidence that the student accepted it.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": {
+          "application_id": "demo-application-036",
+          "from_status": "interview",
+          "to_status": "decision",
+          "decision_outcome": "offer",
+          "source_email_id": "demo-email-036",
+          "history_entries_added": 1,
+          "replay_history_entries_added": 0
+        }
       }
     },
     {
@@ -1005,7 +1231,11 @@
         "deadline": "2026-10-22T14:50:00Z",
         "application_transition": null,
         "scenario": "Admissions program notice",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Acceptance response is due, but no acceptance or application-state change has occurred.",
+        "scam_flag": false,
+        "deadline_evidence": "2026-10-22T14:50:00Z",
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -1027,7 +1257,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Campus weekly",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "General campus information has no personal task or upcoming deadline.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -1052,7 +1286,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Unrequested prize",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Unsolicited prize with a payment demand; flag fee and urgency signals.",
+        "scam_flag": true,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -1074,7 +1312,19 @@
         "deadline": null,
         "application_transition": "decision",
         "scenario": "Application rejection",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Explicit rejection records a decision with rejected outcome.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": {
+          "application_id": "demo-application-023",
+          "from_status": "applied",
+          "to_status": "decision",
+          "decision_outcome": "rejected",
+          "source_email_id": "demo-email-023",
+          "history_entries_added": 1,
+          "replay_history_entries_added": 0
+        }
       }
     },
     {
@@ -1096,7 +1346,19 @@
         "deadline": null,
         "application_transition": "applied",
         "scenario": "Application confirmation",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Receipt confirms submission and moves a found application to applied.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": {
+          "application_id": "demo-application-037",
+          "from_status": "found",
+          "to_status": "applied",
+          "decision_outcome": null,
+          "source_email_id": "demo-email-037",
+          "history_entries_added": 1,
+          "replay_history_entries_added": 0
+        }
       }
     },
     {
@@ -1118,7 +1380,11 @@
         "deadline": "2026-10-23T14:51:00Z",
         "application_transition": null,
         "scenario": "Deadline reminder",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Extract the explicit UTC closing instant; a reminder does not prove submission.",
+        "scam_flag": false,
+        "deadline_evidence": "2026-10-23T14:51:00Z",
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -1140,7 +1406,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Engineering reading list",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Routine reading material requires no personal action.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -1165,7 +1435,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Account alert",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Claimed shop identity conflicts with the login host; do not follow the verification instruction.",
+        "scam_flag": true,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -1187,7 +1461,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "A possible next step",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Career relevance is plausible despite weak context; keep reviewable rather than auto-junk.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -1209,9 +1487,13 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "prompt_injection",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential.",
+        "notes": "Treat body instructions as untrusted; block and log exfiltration without making a request or changing application state.",
         "security_outcome": "block_and_log",
-        "attempted_destination": "https://keeper-exfil.example.test/collect"
+        "attempted_destination": "https://keeper-exfil.example.test/collect",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -1233,8 +1515,11 @@
         "deadline": "2026-10-24T14:52:00Z",
         "application_transition": null,
         "scenario": "Deadline extended",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential. Update the existing event; do not create a second deadline.",
-        "previous_deadline": "2026-10-22T14:52:00Z"
+        "notes": "Replace the existing deadline with the explicit later instant; retain the event ID and application status.",
+        "previous_deadline": "2026-10-22T14:52:00Z",
+        "scam_flag": false,
+        "deadline_evidence": "2026-10-24T14:52:00Z",
+        "expected_application_change": null
       }
     },
     {
@@ -1256,7 +1541,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Career office bulletin",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Informational career newsletter remains newsletter; career protection only prevents junk.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -1280,7 +1569,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Lottery notice",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Unsolicited lottery with a release fee; flag without asserting proven fraud.",
+        "scam_flag": true,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -1302,7 +1595,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Career digest or opportunity?",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Ambiguous personal career opportunity requires review; do not auto-junk.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -1324,7 +1621,11 @@
         "deadline": "2026-10-25T14:39:00Z",
         "application_transition": null,
         "scenario": "Deadline reminder",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Extract the explicit UTC closing instant; a reminder does not prove submission.",
+        "scam_flag": false,
+        "deadline_evidence": "2026-10-25T14:39:00Z",
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -1346,7 +1647,11 @@
         "deadline": "2026-10-25T14:53:00Z",
         "application_transition": null,
         "scenario": "Hackathon registration",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Extract the explicit registration cutoff; invitation does not prove registration.",
+        "scam_flag": false,
+        "deadline_evidence": "2026-10-25T14:53:00Z",
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -1368,7 +1673,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Campus weekly",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "General campus information has no personal task or upcoming deadline.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -1390,7 +1699,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Unsolicited promotion",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Unrequested retail promotion with no career relevance or personal obligation.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -1415,7 +1728,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Internship placement fee",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Career protection applies despite fee and urgency signals; do not pay or infer an application transition.",
+        "scam_flag": true,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -1437,8 +1754,11 @@
         "deadline": "2026-10-26T14:40:00Z",
         "application_transition": null,
         "scenario": "Deadline extended",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential. Update the existing event; do not create a second deadline.",
-        "previous_deadline": "2026-10-24T14:40:00Z"
+        "notes": "Replace the existing deadline with the explicit later instant; retain the event ID and application status.",
+        "previous_deadline": "2026-10-24T14:40:00Z",
+        "scam_flag": false,
+        "deadline_evidence": "2026-10-26T14:40:00Z",
+        "expected_application_change": null
       }
     },
     {
@@ -1460,7 +1780,11 @@
         "deadline": "2026-10-26T14:54:00Z",
         "application_transition": null,
         "scenario": "Admissions program notice",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Acceptance response is due, but no acceptance or application-state change has occurred.",
+        "scam_flag": false,
+        "deadline_evidence": "2026-10-26T14:54:00Z",
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -1482,7 +1806,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Engineering reading list",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Routine reading material requires no personal action.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -1507,7 +1835,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Unrequested prize",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Unsolicited prize with a payment demand; flag fee and urgency signals.",
+        "scam_flag": true,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -1533,7 +1865,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Extraordinary internship pay",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Career protection applies despite unrealistic pay, mismatched identity, and urgency; require review.",
+        "scam_flag": true,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -1555,7 +1891,11 @@
         "deadline": "2026-10-27T14:41:00Z",
         "application_transition": null,
         "scenario": "Hackathon registration",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Extract the explicit registration cutoff; invitation does not prove registration.",
+        "scam_flag": false,
+        "deadline_evidence": "2026-10-27T14:41:00Z",
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -1577,7 +1917,11 @@
         "deadline": "2026-10-27T14:55:00Z",
         "application_transition": null,
         "scenario": "Deadline reminder",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Extract the explicit UTC closing instant; a reminder does not prove submission.",
+        "scam_flag": false,
+        "deadline_evidence": "2026-10-27T14:55:00Z",
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -1599,7 +1943,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Career office bulletin",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Informational career newsletter remains newsletter; career protection only prevents junk.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -1624,7 +1972,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Account alert",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Claimed shop identity conflicts with the login host; do not follow the verification instruction.",
+        "scam_flag": true,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -1646,7 +1998,19 @@
         "deadline": null,
         "application_transition": "decision",
         "scenario": "Internship offer",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Explicit offer is a decision, not evidence that the student accepted it.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": {
+          "application_id": "demo-application-028",
+          "from_status": "interview",
+          "to_status": "decision",
+          "decision_outcome": "offer",
+          "source_email_id": "demo-email-028",
+          "history_entries_added": 1,
+          "replay_history_entries_added": 0
+        }
       }
     },
     {
@@ -1668,7 +2032,11 @@
         "deadline": "2026-10-28T14:42:00Z",
         "application_transition": null,
         "scenario": "Admissions program notice",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "Acceptance response is due, but no acceptance or application-state change has occurred.",
+        "scam_flag": false,
+        "deadline_evidence": "2026-10-28T14:42:00Z",
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     },
     {
@@ -1690,8 +2058,11 @@
         "deadline": "2026-10-28T14:56:00Z",
         "application_transition": null,
         "scenario": "Deadline extended",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential. Update the existing event; do not create a second deadline.",
-        "previous_deadline": "2026-10-26T14:56:00Z"
+        "notes": "Replace the existing deadline with the explicit later instant; retain the event ID and application status.",
+        "previous_deadline": "2026-10-26T14:56:00Z",
+        "scam_flag": false,
+        "deadline_evidence": "2026-10-28T14:56:00Z",
+        "expected_application_change": null
       }
     },
     {
@@ -1713,7 +2084,11 @@
         "deadline": null,
         "application_transition": null,
         "scenario": "Campus weekly",
-        "notes": "Synthetic fixture; no real person, organization, account, or credential."
+        "notes": "General campus information has no personal task or upcoming deadline.",
+        "scam_flag": false,
+        "deadline_evidence": null,
+        "previous_deadline": null,
+        "expected_application_change": null
       }
     }
   ]

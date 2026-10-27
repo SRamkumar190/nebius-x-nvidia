@@ -17,7 +17,7 @@ class KeeperDatabaseTest(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.db = Path(self.tmp.name) / "nested" / "keeper.db"
-        self.assertEqual(migrate(self.db), 1)
+        self.assertEqual(migrate(self.db), 2)
         self.conn = sqlite3.connect(self.db)
         self.conn.execute("PRAGMA foreign_keys = ON")
 
@@ -46,9 +46,9 @@ class KeeperDatabaseTest(unittest.TestCase):
     def test_bootstrap_is_idempotent_and_keeps_data(self):
         self.email()
         self.conn.commit()
-        self.assertEqual(migrate(self.db), 1)
+        self.assertEqual(migrate(self.db), 2)
         self.assertEqual(self.conn.execute("SELECT count(*) FROM email_records").fetchone()[0], 1)
-        self.assertEqual(self.conn.execute("PRAGMA user_version").fetchone()[0], 1)
+        self.assertEqual(self.conn.execute("PRAGMA user_version").fetchone()[0], 2)
 
     def test_unique_email_provider_mapping_and_id(self):
         self.email()
@@ -125,12 +125,15 @@ class KeeperDatabaseTest(unittest.TestCase):
         (directory / "001_initial.sql").write_text(
             (MIGRATIONS / "001_initial.sql").read_text(encoding="utf-8"), encoding="utf-8"
         )
-        (directory / "002_broken.sql").write_text(
+        (directory / "002_ingestion_outcomes.sql").write_text(
+            (MIGRATIONS / "002_ingestion_outcomes.sql").read_text(), encoding="utf-8"
+        )
+        (directory / "003_broken.sql").write_text(
             "CREATE TABLE should_rollback (id TEXT);\nINVALID SQL;\n", encoding="utf-8"
         )
         with self.assertRaises(sqlite3.Error):
             migrate(self.db, migrations_dir=directory)
-        self.assertEqual(self.conn.execute("PRAGMA user_version").fetchone()[0], 1)
+        self.assertEqual(self.conn.execute("PRAGMA user_version").fetchone()[0], 2)
         self.assertIsNone(self.conn.execute(
             "SELECT name FROM sqlite_master WHERE name = 'should_rollback'"
         ).fetchone())
@@ -142,9 +145,9 @@ class KeeperDatabaseTest(unittest.TestCase):
             [sys.executable, str(script), "--db", str(path)],
             cwd=self.tmp.name, text=True, capture_output=True, check=True,
         )
-        self.assertIn("schema version 1", result.stdout)
+        self.assertIn("schema version 2", result.stdout)
         with sqlite3.connect(path) as conn:
-            self.assertEqual(conn.execute("PRAGMA user_version").fetchone()[0], 1)
+            self.assertEqual(conn.execute("PRAGMA user_version").fetchone()[0], 2)
 
 
 class TimestampTest(unittest.TestCase):
