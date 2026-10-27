@@ -128,9 +128,9 @@ These are initial assignments, **not assertions about unverified individual spec
 5. Implement Calendar search/create/update adapter functions that store provider event IDs and support event updates.-
 6. Configure Telegram bot/gateway and a minimal `sendMessage` adapter with retry and delivery logging.-
 7. Implement Tavily search adapter with timeout, bounded results, error handling, and deterministic fake responses.-
-8. Add adapter health checks and test all fakes before exercising real accounts.
-9. Verify the gateway user can read required configuration and perform authorized `/teach`/`/keep` writes without granting excessive permissions.
-10. Document service scopes, hostnames, sandbox secret locations, revocation steps, and known setup failure modes.
+8. Add adapter health checks and test all fakes before exercising real accounts.-
+9. Verify the gateway user can read required configuration and perform authorized `/teach`/`/keep` writes without granting excessive permissions.-
+10. Document service scopes, hostnames, sandbox secret locations, revocation steps, and known setup failure modes.-
 
 **Definition of done:** Each service passes a standalone read/write-where-authorized smoke test; no real messages are sent; all secrets remain outside the repository.
 
