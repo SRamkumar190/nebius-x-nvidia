@@ -30,6 +30,10 @@ class TavilyTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.searcher.search("internship", limit=21)
 
+    def test_health_uses_one_bounded_search(self):
+        self.searcher.check_health()
+        self.assertEqual(self.calls[0][1]["max_results"], 1)
+
     def test_timeout_and_provider_errors(self):
         for outcome, expected in [(TimeoutError(), ProviderUnavailable),
                                   (HttpFailure(429, {}, 3), RateLimited),

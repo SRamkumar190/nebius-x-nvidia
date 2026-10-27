@@ -26,6 +26,10 @@ class LiveTavily:
     def from_key_file(cls, key_file: Path, *, timeout: float = 8.0) -> "LiveTavily":
         return cls(Path(key_file).read_text(encoding="utf-8"), timeout=timeout)
 
+    def check_health(self) -> None:
+        """One bounded search; may consume a Tavily request credit."""
+        self.search("site:example.com Keeper health probe", limit=1)
+
     def search(self, query: str, *, limit: int = 5) -> tuple[SearchHit, ...]:
         if not query.strip() or not 1 <= limit <= 20:
             raise ValueError("query and limit between 1 and 20 are required")

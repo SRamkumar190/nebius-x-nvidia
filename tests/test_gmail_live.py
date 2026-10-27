@@ -134,6 +134,10 @@ class Service:
     def users(self):
         return self
 
+    def getProfile(self, **kwargs):
+        self.calls.append(("getProfile", kwargs))
+        return Request(lambda: {"emailAddress": "demo@example.test"})
+
     def messages(self):
         return Messages(self)
 
@@ -164,6 +168,10 @@ class GmailAdapterTest(unittest.TestCase):
         self.assertIsNone(second.next_cursor)
         self.assertEqual(self.gmail.read_email("gmail:1").body_text, "Full body")
         self.assertEqual(first.records[0].received_at.tzinfo, timezone.utc)
+
+    def test_health_reads_profile_without_message_mutation(self):
+        self.gmail.check_health()
+        self.assertEqual([name for name, _ in self.service.calls], ["getProfile"])
 
     def test_rate_limit_retries_and_exhaustion(self):
         self.service.failures["messages.list"] = [gmail_error(429, retry_after=4)]

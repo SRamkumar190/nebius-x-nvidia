@@ -6,6 +6,7 @@ import json
 import sqlite3
 import time
 from datetime import datetime, timezone
+from contextlib import closing
 from pathlib import Path
 from typing import Callable
 
@@ -52,9 +53,26 @@ class LiveTelegram:
     def from_token_file(cls, token_file: Path, db_path: Path) -> "LiveTelegram":
         return cls(Path(token_file).read_text(encoding="utf-8").strip(), db_path)
 
+    def check_health(self) -> None:
+        """Call getMe; never sends a message or writes a delivery row."""
+        try:
+            response = self._transport(
+                f"https://api.telegram.org/bot{self._token}/getMe", {}, {}, self._timeout)
+        except HttpFailure as exc:
+            if exc.status in (401, 403):
+                raise AuthenticationError("Telegram bot token is invalid") from None
+            if exc.status == 429:
+                raise RateLimited("Telegram health probe rate limited", exc.retry_after) from None
+            raise ProviderUnavailable("Telegram health probe failed") from None
+        if not isinstance(response, dict) or response.get("ok") is not True or not isinstance(response.get("result"), dict):
+            raise InvalidProviderResponse("Telegram getMe returned invalid response")
+        bot_id = response["result"].get("id")
+        if not isinstance(bot_id, int) or isinstance(bot_id, bool):
+            raise InvalidProviderResponse("Telegram getMe returned no bot ID")
+
     def _claim(self, key: str, recipient: str, message: str) -> tuple[str, str | None]:
         record_id = _record_id(key, recipient, message)
-        with sqlite3.connect(self._db_path, timeout=10) as conn:
+        with closing(sqlite3.connect(self._db_path, timeout=10)) as conn, conn:
             conn.execute("BEGIN IMMEDIATE")
             row = conn.execute("SELECT id, status, provider_message_id FROM notification_records WHERE idempotency_key = ?",
                                (key,)).fetchone()
@@ -78,7 +96,7 @@ class LiveTelegram:
 
     def _log(self, record_id: str, status: str, *, message_id: str | None = None,
              error: str | None = None) -> None:
-        with sqlite3.connect(self._db_path, timeout=10) as conn:
+        with closing(sqlite3.connect(self._db_path, timeout=10)) as conn, conn:
             conn.execute("""UPDATE notification_records SET status = ?, provider_message_id = ?,
                 delivered_at = ?, error = ? WHERE id = ?""",
                 (status, message_id, to_storage(self._now()) if status == "delivered" else None,

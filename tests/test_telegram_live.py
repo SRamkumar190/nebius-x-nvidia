@@ -1,6 +1,7 @@
 import sqlite3
 import tempfile
 import unittest
+from contextlib import closing
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -34,8 +35,14 @@ class TelegramTest(unittest.TestCase):
         self.tmp.cleanup()
 
     def row(self):
-        with sqlite3.connect(self.db) as conn:
+        with closing(sqlite3.connect(self.db)) as conn:
             return conn.execute("SELECT status, provider_message_id, error, recipient_reference FROM notification_records").fetchone()
+
+    def test_health_calls_get_me_without_delivery_record(self):
+        self.responses = [{"ok": True, "result": {"id": 91}}]
+        self.bot.check_health()
+        self.assertTrue(self.calls[0][0].endswith("/getMe"))
+        self.assertIsNone(self.row())
 
     def test_delivery_logged_and_replay_returns_saved_id(self):
         self.responses = [{"ok": True, "result": {"message_id": 23}}]

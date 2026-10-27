@@ -3,6 +3,7 @@ import json
 import sqlite3
 import tempfile
 import unittest
+from contextlib import closing
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -112,7 +113,7 @@ class CalendarTest(unittest.TestCase):
         migrate(self.db)
         self.initial = datetime(2026, 11, 1, 12, tzinfo=timezone.utc)
         stamp = to_storage(self.initial)
-        with sqlite3.connect(self.db) as conn:
+        with closing(sqlite3.connect(self.db)) as conn, conn:
             conn.execute("""INSERT INTO opportunities
                 (id, dedupe_key, canonical_url, organization, title, source, discovered_at, eligibility)
                 VALUES ('opp:1', 'key:1', 'https://example.test/1', 'Example', 'Intern', 'test', ?, 'eligible')""", (stamp,))
@@ -128,8 +129,13 @@ class CalendarTest(unittest.TestCase):
         self.temp.cleanup()
 
     def mapping(self):
-        with sqlite3.connect(self.db) as conn:
+        with closing(sqlite3.connect(self.db)) as conn:
             return conn.execute("SELECT provider, provider_event_id, deadline_at FROM deadline_events WHERE id = 'deadline:1'").fetchone()
+
+    def test_health_lists_one_page_without_changes(self):
+        self.calendar.check_health()
+        self.assertEqual([name for name, _ in self.service.calls], ["list"])
+        self.assertEqual(self.service.calls[0][1]["maxResults"], 1)
 
     def test_create_persists_id_then_updates_same_event(self):
         event_id = self.calendar.create_deadline("deadline:1", self.initial, "Apply", idempotency_key="key:1")
@@ -158,7 +164,7 @@ class CalendarTest(unittest.TestCase):
 
     def test_recovers_provider_id_after_database_write_gap(self):
         provider_id = self.calendar.create_deadline("deadline:1", self.initial, "Apply", idempotency_key="key:1")
-        with sqlite3.connect(self.db) as conn:
+        with closing(sqlite3.connect(self.db)) as conn, conn:
             conn.execute("UPDATE deadline_events SET provider = NULL, provider_event_id = NULL WHERE id = 'deadline:1'")
         restarted = LiveCalendar(self.service, self.db)
         self.assertEqual(restarted.upsert_deadline("deadline:1", self.initial, "Apply",
@@ -189,7 +195,7 @@ class CalendarTest(unittest.TestCase):
 
     def test_deterministic_id_recovers_a_search_index_gap(self):
         provider_id = self.calendar.create_deadline("deadline:1", self.initial, "Apply", idempotency_key="key:1")
-        with sqlite3.connect(self.db) as conn:
+        with closing(sqlite3.connect(self.db)) as conn, conn:
             conn.execute("UPDATE deadline_events SET provider = NULL, provider_event_id = NULL WHERE id = 'deadline:1'")
         self.service.hide_key_search = True
         restarted = LiveCalendar(self.service, self.db)

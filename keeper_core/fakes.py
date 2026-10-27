@@ -34,6 +34,9 @@ class FakeGmail:
     drafts_by_key: dict[str, tuple[str, str, str, str]] = field(default_factory=dict)
     label_keys: dict[str, tuple[str, tuple[str, ...]]] = field(default_factory=dict)
 
+    def check_health(self) -> None:
+        pass
+
     def list_emails(self, *, cursor: str | None = None, limit: int = 50) -> EmailPage:
         if limit < 1:
             raise ValueError("limit must be positive")
@@ -75,6 +78,9 @@ class FakeGmail:
 class FakeCalendar:
     events_by_key: dict[str, tuple[str, str, datetime, str]] = field(default_factory=dict)
 
+    def check_health(self) -> None:
+        pass
+
     def search_events(self, query: str, *, cursor: str | None = None, limit: int = 50) -> CalendarEventPage:
         if not 1 <= limit <= 250:
             raise ValueError("limit must be between 1 and 250")
@@ -109,6 +115,9 @@ class FakeCalendar:
 class FakeTelegram:
     messages_by_key: dict[str, tuple[str, str, str]] = field(default_factory=dict)
 
+    def check_health(self) -> None:
+        pass
+
     def send_message(self, recipient_reference: str, text: str, *, idempotency_key: str) -> str:
         existing = self.messages_by_key.get(idempotency_key)
         if existing and existing[1:] != (recipient_reference, text):
@@ -122,6 +131,9 @@ class FakeTelegram:
 @dataclass
 class FakeTavily:
     results_by_query: dict[str, tuple[SearchHit, ...]]
+
+    def check_health(self) -> None:
+        pass
 
     def search(self, query: str, *, limit: int = 5) -> tuple[SearchHit, ...]:
         if not query.strip() or not 1 <= limit <= 20:

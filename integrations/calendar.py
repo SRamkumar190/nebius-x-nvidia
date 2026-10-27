@@ -6,6 +6,7 @@ import json
 import sqlite3
 import time
 from datetime import datetime, timedelta, timezone
+from contextlib import closing
 from pathlib import Path
 from typing import Callable
 
@@ -104,6 +105,13 @@ class LiveCalendar:
         return cls(build("calendar", "v3", credentials=credentials, cache_discovery=False),
                    db_path, calendar_id=calendar_id)
 
+    def check_health(self) -> None:
+        """Read one event page without creating or changing an event."""
+        page = self._execute(lambda: self._service.events().list(
+            calendarId=self._calendar_id, maxResults=1))
+        if not isinstance(page.get("items", []), list):
+            raise InvalidProviderResponse("Calendar health response has invalid events")
+
     def _execute(self, request: Callable[[], object], *, safe_to_retry: bool = True) -> dict:
         for attempt in range(self._max_attempts):
             try:
@@ -158,7 +166,7 @@ class LiveCalendar:
                                        for item in items), next_cursor)
 
     def _stored_id(self, event_id: str) -> str | None:
-        with sqlite3.connect(self._db_path) as conn:
+        with closing(sqlite3.connect(self._db_path)) as conn:
             row = conn.execute("SELECT provider, provider_event_id FROM deadline_events WHERE id = ?",
                                (event_id,)).fetchone()
         if row is None:
@@ -168,7 +176,7 @@ class LiveCalendar:
         return row[1]
 
     def _save_mapping(self, event_id: str, provider_id: str, deadline_at: datetime) -> None:
-        with sqlite3.connect(self._db_path, timeout=10) as conn:
+        with closing(sqlite3.connect(self._db_path, timeout=10)) as conn, conn:
             conn.execute("BEGIN IMMEDIATE")
             row = conn.execute("SELECT provider, provider_event_id FROM deadline_events WHERE id = ?",
                                (event_id,)).fetchone()

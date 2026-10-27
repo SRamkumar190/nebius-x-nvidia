@@ -126,6 +126,12 @@ class LiveGmail:
         service = build("gmail", "v1", credentials=credentials, cache_discovery=False)
         return cls(service, run_id=run_id)
 
+    def check_health(self) -> None:
+        """Read-only API and authorization probe; does not inspect inbox content."""
+        profile = self._execute(lambda: self._service.users().getProfile(userId="me"))
+        if not isinstance(profile.get("emailAddress"), str) or not profile["emailAddress"]:
+            raise InvalidProviderResponse("Gmail profile has no email address")
+
     def _execute(self, request: Callable[[], object], *, safe_to_retry: bool = True) -> dict:
         for attempt in range(self._max_attempts):
             try:
