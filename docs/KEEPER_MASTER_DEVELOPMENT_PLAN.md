@@ -122,8 +122,8 @@ These are initial assignments, **not assertions about unverified individual spec
 **Output:** OAuth bootstrap and tested adapter layer
 
 1. Create a disposable demo Google account and Google Cloud project; enable Gmail and Calendar APIs under appropriate test-user configuration. (Someone else do this, not me. -Rishi) 
-2. Configure desktop OAuth with minimum scopes needed for reading/modifying Gmail, creating drafts, and editing calendar events; keep any demo seeding capability separate. 
-3. Write a local interactive authorization script and a secure token installation script for the sandbox; do not commit generated credentials.
+2. Configure desktop OAuth with minimum scopes needed for reading/modifying Gmail, creating drafts, and editing calendar events; keep any demo seeding capability separate. -
+3. Write a local interactive authorization script and a secure token installation script for the sandbox; do not commit generated credentials. -
 4. Implement Gmail list/read/label/draft adapter functions with pagination, rate-limit handling, and explicit no-send behavior.
 5. Implement Calendar search/create/update adapter functions that store provider event IDs and support event updates.
 6. Configure Telegram bot/gateway and a minimal `sendMessage` adapter with retry and delivery logging.

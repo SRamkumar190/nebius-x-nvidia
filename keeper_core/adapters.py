@@ -45,6 +45,14 @@ class EmailPage:
 
 
 @dataclass(frozen=True, slots=True)
+class ReadEmail:
+    record: EmailRecord
+    body_text: str
+    message_id_header: str | None = None
+    references_header: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class SearchHit:
     url: str
     title: str
@@ -60,6 +68,7 @@ class ModelAnswer:
 
 class GmailAdapter(Protocol):
     def list_emails(self, *, cursor: str | None = None, limit: int = 50) -> EmailPage: ...
+    def read_email(self, email_id: str) -> ReadEmail: ...
     def add_labels(self, email_id: str, labels: tuple[str, ...], *, idempotency_key: str) -> None: ...
     def create_draft(self, email_id: str, subject: str, body: str, *, idempotency_key: str) -> str: ...
 

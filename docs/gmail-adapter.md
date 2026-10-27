@@ -1,0 +1,11 @@
+# Gmail action adapter
+
+`integrations.gmail.LiveGmail` implements `GmailAdapter` for the demo account. Install `requirements.txt`, then create it with `LiveGmail.from_token_file(Path("/sandbox/keeper/secrets/google-token.json"), run_id="<stable run ID>")`. The installed OAuth token must include `gmail.modify`. Never put the token in the repository or print its content.
+
+`list_emails(limit=50, cursor=None)` requests one inbox page and returns `EmailPage(records, next_cursor)`. The caller passes `next_cursor` into the next call until it is `None`. The adapter reads each returned message ID to populate the canonical record. `read_email("gmail:<message ID>")` returns that record plus a plain text body and reply headers. Received times use Gmail `internalDate`, converted to UTC; the full body falls back to the snippet when plain text is unavailable.
+
+`add_labels` accepts only uppercase `KEEPER_` names. It creates missing labels and adds only absent label IDs, so repeating the same change does not add duplicates. It never removes existing labels. A reused idempotency key with different input raises `IdempotencyConflict` within the adapter instance.
+
+`create_draft` stores a MIME message through `drafts.create`; it omits recipient headers and exposes no send method. It hashes the supplied idempotency key into a private draft header and scans existing drafts for that header before creating another. A matching key with changed content raises `IdempotencyConflict`. A draft create with an uncertain outcome is **not** retried automatically: call it again with the same key so it rescans first. The scan is capped at 5,000 drafts; reaching that cap raises an error for operator reconciliation. Deleting or altering the marker on a draft removes this deduplication evidence.
+
+Read and additive label requests retry boundedly on HTTP 429, Gmail rate quota responses, and transient 5xx, honoring numeric `Retry-After` up to 30 seconds. Draft and label creation surface uncertain errors without blind replay. Tests use an injected offline Gmail service and never access a live account. `gmail.modify` grants broader authority than this adapter exposes, including send authority, so the no-send guarantee depends on this code path and the sandbox policy.

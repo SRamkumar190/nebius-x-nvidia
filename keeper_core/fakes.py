@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .adapters import EmailPage, IdempotencyConflict, ModelAnswer, ProviderNotFound, SearchHit
+from .adapters import EmailPage, IdempotencyConflict, ModelAnswer, ProviderNotFound, ReadEmail, SearchHit
 from .contracts import EmailRecord, IngestionMetadata, ModelMetadata
 from .time import from_storage
 
@@ -41,6 +41,12 @@ class FakeGmail:
             raise ValueError("invalid cursor")
         end = min(start + limit, len(self.emails))
         return EmailPage(self.emails[start:end], str(end) if end < len(self.emails) else None)
+
+    def read_email(self, email_id: str) -> ReadEmail:
+        for email in self.emails:
+            if email.id == email_id:
+                return ReadEmail(email, email.body_excerpt)
+        raise ProviderNotFound(email_id)
 
     def add_labels(self, email_id: str, labels: tuple[str, ...], *, idempotency_key: str) -> None:
         if not any(email.id == email_id for email in self.emails):
