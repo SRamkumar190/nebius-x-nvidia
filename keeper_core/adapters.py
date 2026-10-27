@@ -53,6 +53,19 @@ class ReadEmail:
 
 
 @dataclass(frozen=True, slots=True)
+class CalendarEventSummary:
+    provider_event_id: str
+    summary: str
+    starts_at: datetime | None
+
+
+@dataclass(frozen=True, slots=True)
+class CalendarEventPage:
+    events: tuple[CalendarEventSummary, ...]
+    next_cursor: str | None
+
+
+@dataclass(frozen=True, slots=True)
 class SearchHit:
     url: str
     title: str
@@ -74,6 +87,10 @@ class GmailAdapter(Protocol):
 
 
 class CalendarAdapter(Protocol):
+    def search_events(self, query: str, *, cursor: str | None = None, limit: int = 50) -> CalendarEventPage: ...
+    def create_deadline(
+        self, event_id: str, deadline_at: datetime, summary: str, *, idempotency_key: str,
+    ) -> str: ...
     def upsert_deadline(
         self, event_id: str, deadline_at: datetime, summary: str, *,
         idempotency_key: str, provider_event_id: str | None = None,

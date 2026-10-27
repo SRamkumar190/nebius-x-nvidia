@@ -6,7 +6,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .adapters import EmailPage, IdempotencyConflict, ModelAnswer, ProviderNotFound, ReadEmail, SearchHit
+from .adapters import (CalendarEventPage, CalendarEventSummary, EmailPage,
+                       IdempotencyConflict, ModelAnswer, ProviderNotFound, ReadEmail, SearchHit)
 from .contracts import EmailRecord, IngestionMetadata, ModelMetadata
 from .time import from_storage
 
@@ -73,6 +74,20 @@ class FakeGmail:
 @dataclass
 class FakeCalendar:
     events_by_key: dict[str, tuple[str, str, datetime, str]] = field(default_factory=dict)
+
+    def search_events(self, query: str, *, cursor: str | None = None, limit: int = 50) -> CalendarEventPage:
+        if not 1 <= limit <= 250:
+            raise ValueError("limit must be between 1 and 250")
+        matches = [CalendarEventSummary(value[0], value[3], value[2])
+                   for value in self.events_by_key.values() if query.casefold() in value[3].casefold()]
+        start = int(cursor) if cursor is not None else 0
+        if start < 0 or start > len(matches):
+            raise ValueError("invalid cursor")
+        end = min(start + limit, len(matches))
+        return CalendarEventPage(tuple(matches[start:end]), str(end) if end < len(matches) else None)
+
+    def create_deadline(self, event_id: str, deadline_at: datetime, summary: str, *, idempotency_key: str) -> str:
+        return self.upsert_deadline(event_id, deadline_at, summary, idempotency_key=idempotency_key)
 
     def upsert_deadline(
         self, event_id: str, deadline_at: datetime, summary: str, *,
