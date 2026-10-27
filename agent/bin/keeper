@@ -1,18 +1,36 @@
 #!/usr/bin/env bash
-# Keeper's command line inside the sandbox: keeper {memory|skills|router} ...
+# Keeper's command line inside the sandbox: keeper {memory|skills|router|health} ...
 set -euo pipefail
+umask 077
 APP_DIR="${KEEPER_APP_DIR:-/sandbox/keeper/app}"
 PY="${KEEPER_PYTHON:-/opt/hermes/.venv/bin/python}"
 export KEEPER_DATA_DIR="${KEEPER_DATA_DIR:-/sandbox/keeper/data}"
+export HERMES_HOME="${HERMES_HOME:-/sandbox/.hermes}"
+if [ -z "${KEEPER_SOUL_FILES:-}" ]; then
+  export KEEPER_SOUL_FILES="/sandbox/SOUL.md:$HERMES_HOME/SOUL.md"
+  if [ -d "$HERMES_HOME/runtime" ]; then
+    export KEEPER_SOUL_FILES="$KEEPER_SOUL_FILES:$HERMES_HOME/runtime/SOUL.md"
+  fi
+fi
+if [ -z "${KEEPER_HERMES_STATE_DB:-}" ]; then
+  if [ -f "$HERMES_HOME/runtime/state.db" ]; then
+    export KEEPER_HERMES_STATE_DB="$HERMES_HOME/runtime/state.db"
+  else
+    export KEEPER_HERMES_STATE_DB="$HERMES_HOME/state.db"
+  fi
+fi
 # Only used if agent/openshell/install-key-file.sh was run.
 export KEEPER_TOKENFACTORY_KEY_FILE="${KEEPER_TOKENFACTORY_KEY_FILE:-/sandbox/keeper/secrets/tokenfactory.key}"
 export PYTHONPATH="$APP_DIR${PYTHONPATH:+:$PYTHONPATH}"
 
 case "${1:-}" in
+  health)
+    shift
+    exec "$PY" -m integrations.health "$@" ;;
   memory|skills|router)
     cmd="$1"; shift
     exec "$PY" -m "$cmd" "$@" ;;
   *)
-    echo "usage: keeper {memory|skills|router} ..." >&2
+    echo "usage: keeper {memory|skills|router|health} ..." >&2
     exit 2 ;;
 esac

@@ -45,6 +45,27 @@ class EmailPage:
 
 
 @dataclass(frozen=True, slots=True)
+class ReadEmail:
+    record: EmailRecord
+    body_text: str
+    message_id_header: str | None = None
+    references_header: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class CalendarEventSummary:
+    provider_event_id: str
+    summary: str
+    starts_at: datetime | None
+
+
+@dataclass(frozen=True, slots=True)
+class CalendarEventPage:
+    events: tuple[CalendarEventSummary, ...]
+    next_cursor: str | None
+
+
+@dataclass(frozen=True, slots=True)
 class SearchHit:
     url: str
     title: str
@@ -59,12 +80,19 @@ class ModelAnswer:
 
 
 class GmailAdapter(Protocol):
+    def check_health(self) -> None: ...
     def list_emails(self, *, cursor: str | None = None, limit: int = 50) -> EmailPage: ...
+    def read_email(self, email_id: str) -> ReadEmail: ...
     def add_labels(self, email_id: str, labels: tuple[str, ...], *, idempotency_key: str) -> None: ...
     def create_draft(self, email_id: str, subject: str, body: str, *, idempotency_key: str) -> str: ...
 
 
 class CalendarAdapter(Protocol):
+    def check_health(self) -> None: ...
+    def search_events(self, query: str, *, cursor: str | None = None, limit: int = 50) -> CalendarEventPage: ...
+    def create_deadline(
+        self, event_id: str, deadline_at: datetime, summary: str, *, idempotency_key: str,
+    ) -> str: ...
     def upsert_deadline(
         self, event_id: str, deadline_at: datetime, summary: str, *,
         idempotency_key: str, provider_event_id: str | None = None,
@@ -72,10 +100,12 @@ class CalendarAdapter(Protocol):
 
 
 class TelegramAdapter(Protocol):
+    def check_health(self) -> None: ...
     def send_message(self, recipient_reference: str, text: str, *, idempotency_key: str) -> str: ...
 
 
 class TavilyAdapter(Protocol):
+    def check_health(self) -> None: ...
     def search(self, query: str, *, limit: int = 5) -> tuple[SearchHit, ...]: ...
 
 

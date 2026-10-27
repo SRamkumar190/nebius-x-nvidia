@@ -10,3 +10,5 @@ py scripts\test_tokenfactory.py
 ```
 
 It reads `TOKENFACTORY_API_KEY` from the environment. Set `KEEPER_MODELS` to a comma-separated list of model ids if you want to probe a different set.
+
+`google_oauth.py` opens a local browser flow for the disposable demo Google account and writes a private runtime token outside the repository. `validate_google_token.py` checks its shape and scopes without displaying it. Use `agent/openshell/install-google-token.sh` from WSL to install it in the sandbox. See [the Google authorization runbook](../docs/google-authorization.md) for the exact commands and permissions.

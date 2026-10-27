@@ -6,7 +6,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .adapters import EmailPage, IdempotencyConflict, ModelAnswer, ProviderNotFound, SearchHit
+from .adapters import (CalendarEventPage, CalendarEventSummary, EmailPage,
+                       IdempotencyConflict, ModelAnswer, ProviderNotFound, ReadEmail, SearchHit)
 from .contracts import EmailRecord, IngestionMetadata, ModelMetadata
 from .time import from_storage
 
@@ -33,6 +34,9 @@ class FakeGmail:
     drafts_by_key: dict[str, tuple[str, str, str, str]] = field(default_factory=dict)
     label_keys: dict[str, tuple[str, tuple[str, ...]]] = field(default_factory=dict)
 
+    def check_health(self) -> None:
+        pass
+
     def list_emails(self, *, cursor: str | None = None, limit: int = 50) -> EmailPage:
         if limit < 1:
             raise ValueError("limit must be positive")
@@ -41,6 +45,12 @@ class FakeGmail:
             raise ValueError("invalid cursor")
         end = min(start + limit, len(self.emails))
         return EmailPage(self.emails[start:end], str(end) if end < len(self.emails) else None)
+
+    def read_email(self, email_id: str) -> ReadEmail:
+        for email in self.emails:
+            if email.id == email_id:
+                return ReadEmail(email, email.body_excerpt)
+        raise ProviderNotFound(email_id)
 
     def add_labels(self, email_id: str, labels: tuple[str, ...], *, idempotency_key: str) -> None:
         if not any(email.id == email_id for email in self.emails):
@@ -68,6 +78,23 @@ class FakeGmail:
 class FakeCalendar:
     events_by_key: dict[str, tuple[str, str, datetime, str]] = field(default_factory=dict)
 
+    def check_health(self) -> None:
+        pass
+
+    def search_events(self, query: str, *, cursor: str | None = None, limit: int = 50) -> CalendarEventPage:
+        if not 1 <= limit <= 250:
+            raise ValueError("limit must be between 1 and 250")
+        matches = [CalendarEventSummary(value[0], value[3], value[2])
+                   for value in self.events_by_key.values() if query.casefold() in value[3].casefold()]
+        start = int(cursor) if cursor is not None else 0
+        if start < 0 or start > len(matches):
+            raise ValueError("invalid cursor")
+        end = min(start + limit, len(matches))
+        return CalendarEventPage(tuple(matches[start:end]), str(end) if end < len(matches) else None)
+
+    def create_deadline(self, event_id: str, deadline_at: datetime, summary: str, *, idempotency_key: str) -> str:
+        return self.upsert_deadline(event_id, deadline_at, summary, idempotency_key=idempotency_key)
+
     def upsert_deadline(
         self, event_id: str, deadline_at: datetime, summary: str, *,
         idempotency_key: str, provider_event_id: str | None = None,
@@ -88,6 +115,9 @@ class FakeCalendar:
 class FakeTelegram:
     messages_by_key: dict[str, tuple[str, str, str]] = field(default_factory=dict)
 
+    def check_health(self) -> None:
+        pass
+
     def send_message(self, recipient_reference: str, text: str, *, idempotency_key: str) -> str:
         existing = self.messages_by_key.get(idempotency_key)
         if existing and existing[1:] != (recipient_reference, text):
@@ -102,9 +132,12 @@ class FakeTelegram:
 class FakeTavily:
     results_by_query: dict[str, tuple[SearchHit, ...]]
 
+    def check_health(self) -> None:
+        pass
+
     def search(self, query: str, *, limit: int = 5) -> tuple[SearchHit, ...]:
-        if limit < 1:
-            raise ValueError("limit must be positive")
+        if not query.strip() or not 1 <= limit <= 20:
+            raise ValueError("query and limit between 1 and 20 are required")
         return self.results_by_query.get(query, ())[:limit]
 
 

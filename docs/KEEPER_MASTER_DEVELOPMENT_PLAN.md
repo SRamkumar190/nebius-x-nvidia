@@ -121,16 +121,16 @@ These are initial assignments, **not assertions about unverified individual spec
 **Depends on:** Phases 0–1  
 **Output:** OAuth bootstrap and tested adapter layer
 
-1. Create a disposable demo Google account and Google Cloud project; enable Gmail and Calendar APIs under appropriate test-user configuration.
-2. Configure desktop OAuth with minimum scopes needed for reading/modifying Gmail, creating drafts, and editing calendar events; keep any demo seeding capability separate.
-3. Write a local interactive authorization script and a secure token installation script for the sandbox; do not commit generated credentials.
-4. Implement Gmail list/read/label/draft adapter functions with pagination, rate-limit handling, and explicit no-send behavior.
-5. Implement Calendar search/create/update adapter functions that store provider event IDs and support event updates.
-6. Configure Telegram bot/gateway and a minimal `sendMessage` adapter with retry and delivery logging.
-7. Implement Tavily search adapter with timeout, bounded results, error handling, and deterministic fake responses.
-8. Add adapter health checks and test all fakes before exercising real accounts.
-9. Verify the gateway user can read required configuration and perform authorized `/teach`/`/keep` writes without granting excessive permissions.
-10. Document service scopes, hostnames, sandbox secret locations, revocation steps, and known setup failure modes.
+1. Create a disposable demo Google account and Google Cloud project; enable Gmail and Calendar APIs under appropriate test-user configuration. (Someone else do this, not me. -Rishi) 
+2. Configure desktop OAuth with minimum scopes needed for reading/modifying Gmail, creating drafts, and editing calendar events; keep any demo seeding capability separate. -
+3. Write a local interactive authorization script and a secure token installation script for the sandbox; do not commit generated credentials. -
+4. Implement Gmail list/read/label/draft adapter functions with pagination, rate-limit handling, and explicit no-send behavior.-
+5. Implement Calendar search/create/update adapter functions that store provider event IDs and support event updates.-
+6. Configure Telegram bot/gateway and a minimal `sendMessage` adapter with retry and delivery logging.-
+7. Implement Tavily search adapter with timeout, bounded results, error handling, and deterministic fake responses.-
+8. Add adapter health checks and test all fakes before exercising real accounts.-
+9. Verify the gateway user can read required configuration and perform authorized `/teach`/`/keep` writes without granting excessive permissions.-
+10. Document service scopes, hostnames, sandbox secret locations, revocation steps, and known setup failure modes.-
 
 **Definition of done:** Each service passes a standalone read/write-where-authorized smoke test; no real messages are sent; all secrets remain outside the repository.
 
@@ -144,16 +144,16 @@ These are initial assignments, **not assertions about unverified individual spec
 **Depends on:** Phases 1–2  
 **Output:** Seeded, repeatable, two-week demo inbox
 
-1. Design roughly 30 synthetic emails spanning two weeks with balanced examples of junk, actionable, due, and newsletter categories.
-2. Include internship offers, application confirmations, interview invitations, rejections, deadline reminders, extensions, hackathons, admissions/program notices, and routine newsletters.
-3. Include ambiguous career emails to exercise the rule that career-related messages cannot be automatically classified as junk.
-4. Include scam-pattern messages: upfront fees, suspicious sender-domain mismatches, unrealistic pay, and urgency language.
-5. Include one clearly labeled prompt-injection email that attempts unauthorized exfiltration to a controlled, non-allowlisted test endpoint; never use real sensitive data.
-6. Record gold labels, expected extracted deadlines, expected application transitions, scam flags, and scenario notes in versioned fixtures.
-7. Build a deterministic seeding script using the demo-only permitted mechanism; separate it from Keeper's production/runtime credentials.
-8. Build an ingestion service that stores Gmail message IDs, normalizes dates, skips already-seen messages, and records processing outcomes.
-9. Add tests for malformed email, missing subject, duplicate delivery, quoted replies, HTML/plaintext variants, and partial API failures.
-10. Provide a `reset-demo` procedure that restores the initial state without deleting developer credentials or unrelated data.
+1. Design roughly 30 synthetic emails spanning two weeks with balanced examples of junk, actionable, due, and newsletter categories. - 
+2. Include internship offers, application confirmations, interview invitations, rejections, deadline reminders, extensions, hackathons, admissions/program notices, and routine newsletters. - 
+3. Include ambiguous career emails to exercise the rule that career-related messages cannot be automatically classified as junk. - 
+4. Include scam-pattern messages: upfront fees, suspicious sender-domain mismatches, unrealistic pay, and urgency language. - 
+5. Include one clearly labeled prompt-injection email that attempts unauthorized exfiltration to a controlled, non-allowlisted test endpoint; never use real sensitive data. - 
+6. Record gold labels, expected extracted deadlines, expected application transitions, scam flags, and scenario notes in versioned fixtures.-
+7. Build a deterministic seeding script using the demo-only permitted mechanism; separate it from Keeper's production/runtime credentials.-
+8. Build an ingestion service that stores Gmail message IDs, normalizes dates, skips already-seen messages, and records processing outcomes.-
+9. Add tests for malformed email, missing subject, duplicate delivery, quoted replies, HTML/plaintext variants, and partial API failures.-
+10. Provide a `reset-demo` procedure that restores the initial state without deleting developer credentials or unrelated data.-
 
 **Definition of done:** A fresh sandbox can seed and ingest the same fixture set, producing stable IDs and expected counts without duplicates.
 
