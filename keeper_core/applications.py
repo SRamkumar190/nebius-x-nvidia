@@ -14,7 +14,7 @@ from .contracts import (
 )
 from .time import from_storage, to_storage
 from .workflow import (
-    advance_application, opportunity_identity_key, organization_key, stable_key,
+    TransitionConflict, advance_application, opportunity_identity_key, organization_key, stable_key,
 )
 
 
@@ -158,10 +158,14 @@ def apply_application_transition(
         return current
     if correction is not None:
         stored = conn.execute(
-            """SELECT target_type, target_id, approval_status, approved_at, actor_reference
+            """SELECT target_type, target_id, correction, approval_status,
+                      created_at, approved_at, actor_reference
                FROM correction_records WHERE id = ?""", (correction.id,)
         ).fetchone()
-        if stored != ("application", application_id, "approved", to_storage(changed_at), correction.actor_reference):
+        if stored != (
+            "application", application_id, correction.correction, "approved",
+            to_storage(correction.created_at), to_storage(changed_at), correction.actor_reference,
+        ):
             raise ValueError("approved correction must be persisted before applying it")
     override = updated.manual_override
     with _atomic(conn):
@@ -190,6 +194,62 @@ def apply_application_transition(
                 "INSERT OR IGNORE INTO application_source_emails(application_id, email_id) VALUES (?, ?)",
                 (application_id, email_id),
             )
+    return updated
+
+
+def apply_manual_correction(
+    conn: sqlite3.Connection, application_id: str, status: ApplicationStatus, *,
+    correction_id: str, actor_reference: str, reason: str,
+    source_evidence: str, approved_at: datetime,
+    decision_outcome: str | None = None,
+) -> Application:
+    """Persist one explicitly approved correction and transition atomically.
+
+    The stable correction ID makes retries idempotent. Reusing it with different
+    content is a conflict, even after a later correction changed current state.
+    """
+    if not all(value.strip() for value in (correction_id, actor_reference, reason, source_evidence)):
+        raise ValueError("correction ID, actor, reason, and evidence are required")
+    if (status is ApplicationStatus.DECISION) != (decision_outcome is not None):
+        raise ValueError("decision outcome is required only for decision status")
+    if get_application(conn, application_id) is None:
+        raise ValueError("application does not exist")
+    existing = conn.execute(
+        """SELECT target_type, target_id, correction, approval_status,
+                  actor_reference FROM correction_records WHERE id = ?""",
+        (correction_id,),
+    ).fetchone()
+    if existing:
+        prior = conn.execute(
+            """SELECT status, reason, source_evidence, decision_outcome
+               FROM application_status_changes WHERE correction_id = ?""",
+            (correction_id,),
+        ).fetchone()
+        if existing != ("application", application_id, reason, "approved", actor_reference) or prior != (
+            status.value, reason, source_evidence, decision_outcome,
+        ):
+            raise TransitionConflict("correction ID was already used with different details")
+        return get_application(conn, application_id)
+    correction = CorrectionRecord(
+        correction_id, "application", application_id, reason,
+        approved_at, "approved", approved_at=approved_at,
+        actor_reference=actor_reference,
+    )
+    with _atomic(conn):
+        conn.execute(
+            """INSERT INTO correction_records
+               (id, target_type, target_id, correction, created_at, approval_status,
+                approved_at, actor_reference)
+               VALUES (?, 'application', ?, ?, ?, 'approved', ?, ?)""",
+            (correction.id, application_id, correction.correction,
+             to_storage(correction.created_at), to_storage(correction.approved_at),
+             correction.actor_reference),
+        )
+        updated = apply_application_transition(
+            conn, application_id, status, changed_at=approved_at,
+            reason=reason, source_evidence=source_evidence,
+            correction=correction, decision_outcome=decision_outcome,
+        )
     return updated
 
 

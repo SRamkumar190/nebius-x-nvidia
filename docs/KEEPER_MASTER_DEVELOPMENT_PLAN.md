@@ -182,11 +182,11 @@ These are initial assignments, **not assertions about unverified individual spec
 **Depends on:** Phases 1, 3, 4  
 **Output:** Persistent application lifecycle tracking
 
-1. Create application repository operations and a transition history table with source evidence for every update.
-2. Resolve company/title identity from messages using normalized organization and opportunity keys; require review for ambiguous matches.
-3. Detect confirmation emails and move matching opportunities from `found` to `applied`.
-4. Detect interview invitations and move matching applications to `interview` without creating duplicate application records.
-5. Detect rejection/offer/decision signals and move matching applications to `decision`, preserving the specific outcome as metadata.
+1. Create application repository operations and a transition history table with source evidence for every update.-
+2. Resolve company/title identity from messages using normalized organization and opportunity keys; require review for ambiguous matches.-
+3. Detect confirmation emails and move matching opportunities from `found` to `applied`.-
+4. Detect interview invitations and move matching applications to `interview` without creating duplicate application records.-
+5. Detect rejection/offer/decision signals and move matching applications to `decision`, preserving the specific outcome as metadata.-
 6. Prevent backwards or contradictory transitions unless explicitly approved; retain full audit history.
 7. Expose CLI commands to list applications, inspect history, and apply a manual correction.
 8. Build a read-only `/apps` Telegram response backed by the same database, if gateway support permits.

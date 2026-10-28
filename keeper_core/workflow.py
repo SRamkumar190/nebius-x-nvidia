@@ -134,6 +134,8 @@ def advance_application(
     if not manual and source_email_id in application.source_email_ids:
         raise TransitionConflict("email was already attached with a different outcome")
     if changed_at < application.updated_at:
+        if manual:
+            raise TransitionConflict("correction approval predates current application state")
         return application  # older evidence never reverses a newer observation
     if not manual and application.manual_override is not None:
         return application  # a manual correction holds until another user action

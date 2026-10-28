@@ -5,7 +5,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from keeper_core.applications import (
-    apply_application_transition, apply_message_transition, create_application, get_application,
+    apply_application_transition, apply_manual_correction, apply_message_transition,
+    create_application, get_application,
     list_applications, resolve_message_application,
 )
 from keeper_core.contracts import ApplicationStatus, CorrectionRecord
@@ -163,6 +164,18 @@ class ApplicationRepositoryTest(unittest.TestCase):
                                          changed_at=WHEN + timedelta(hours=1), reason="Confirmed",
                                          source_evidence="Missing email record", source_email_id="missing")
         self.assertEqual(get_application(self.conn, app.id).status, ApplicationStatus.FOUND)
+        self.assertEqual(len(get_application(self.conn, app.id).status_history), 1)
+
+    def test_stale_approval_rolls_back_correction_record(self):
+        app = create_application(self.conn, "opp:one", created_at=WHEN, source_evidence="Posting URL")
+        with self.assertRaises(TransitionConflict):
+            apply_manual_correction(
+                self.conn, app.id, ApplicationStatus.APPLIED,
+                correction_id="correction:old", actor_reference="user:1",
+                reason="Old approval", source_evidence="Review note",
+                approved_at=WHEN - timedelta(hours=1),
+            )
+        self.assertEqual(self.conn.execute("SELECT count(*) FROM correction_records").fetchone()[0], 0)
         self.assertEqual(len(get_application(self.conn, app.id).status_history), 1)
 
 
