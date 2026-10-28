@@ -170,6 +170,13 @@ class LiveGmail:
         if not isinstance(profile.get("emailAddress"), str) or not profile["emailAddress"]:
             raise InvalidProviderResponse("Gmail profile has no email address")
 
+    def verify_account(self, expected: str) -> None:
+        """Require the operator's disposable demo account before reading its seed."""
+        profile = self._execute(lambda: self._service.users().getProfile(userId="me"))
+        actual = profile.get("emailAddress")
+        if not isinstance(actual, str) or actual.casefold() != expected.casefold():
+            raise AuthenticationError("Authenticated Gmail account does not match the demo account")
+
     def _execute(self, request: Callable[[], object], *, safe_to_retry: bool = True) -> dict:
         for attempt in range(self._max_attempts):
             try:

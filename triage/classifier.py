@@ -11,6 +11,7 @@ from .parsing import parse_payload, verified_deadline
 from .rules import career_status, scam_signals
 
 PROMPT_VERSION = "triage-v1"
+MODEL_UNAVAILABLE_REASON = "Needs review: model temporarily unavailable."
 
 
 def _prompt_for(email: EmailRecord) -> str:
@@ -66,7 +67,7 @@ def classify_email(
                 return _review(email, classified_at, metadata, "Needs review: invalid model response.")
             prompt = _prompt_for(email) + "\nPrevious response failed schema validation; return the exact JSON schema."
         except (ProviderUnavailable, RateLimited, TimeoutError):
-            return _review(email, classified_at, metadata, "Needs review: model temporarily unavailable.")
+            return _review(email, classified_at, metadata, MODEL_UNAVAILABLE_REASON)
     return _result(email, payload, metadata, classified_at)
 
 

@@ -16,6 +16,7 @@ from unittest.mock import patch
 from integrations.gmail import LiveGmail
 from keeper_core.adapters import AuthenticationError, IdempotencyConflict, ProviderUnavailable
 from keeper_core.db import migrate
+from keeper_core.ingest import insert_email_once
 from keeper_core.contracts import TriageBucket
 from tests.test_gmail_live import Service
 from tests.test_triage import FakeModel, UTC_TIME, email, payload
@@ -59,6 +60,45 @@ class StateTest(unittest.TestCase):
         ResultStore(self.path, account="demo@example.test").save(self.record, self.result)
         with self.assertRaises(IdempotencyConflict):
             ResultStore(self.path, account="other@example.test").get(self.record.id)
+
+    def test_saved_fixture_rejects_changed_source_content(self):
+        source = load_emails(FIXTURE)[0]
+        result = classify_email(source, FakeModel(payload()), classified_at=UTC_TIME)
+        store = ResultStore(self.path)
+        store.save(source, result)
+        with self.assertRaises(IdempotencyConflict):
+            store.get(source.id, email=replace(source, body_excerpt="Changed content"))
+
+    def test_phase3_ingested_email_is_reused_without_identity_conflict(self):
+        migrate(self.path)
+        with sqlite3.connect(self.path) as conn:
+            insert_email_once(conn, self.record)
+        store = ResultStore(self.path, account="demo@example.test")
+        store.save(self.record, self.result)
+        self.assertEqual(store.get(self.record.id), self.result)
+
+    def test_version_two_upgrade_preserves_ingested_email(self):
+        with sqlite3.connect(self.path) as conn:
+            for name in ("001_initial.sql", "002_ingestion_outcomes.sql"):
+                conn.executescript((ROOT / "keeper_core/migrations" / name).read_text())
+            conn.execute("PRAGMA user_version=2")
+            insert_email_once(conn, self.record)
+        store = ResultStore(self.path, account="demo@example.test")
+        self.assertIsNone(store.get(self.record.id))
+        store.save(self.record, self.result)
+        with sqlite3.connect(self.path) as conn:
+            self.assertEqual(conn.execute("PRAGMA user_version").fetchone()[0], 3)
+            self.assertEqual(conn.execute("SELECT count(*) FROM email_records").fetchone()[0], 1)
+
+    def test_gmail_save_requires_account_and_unbound_legacy_decision_is_rejected(self):
+        with self.assertRaises(ValueError):
+            ResultStore(self.path).save(self.record, self.result)
+        store = ResultStore(self.path, account="demo@example.test")
+        store.save(self.record, self.result)
+        with sqlite3.connect(self.path) as conn:
+            conn.execute("DELETE FROM triage_account")
+        with self.assertRaises(IdempotencyConflict):
+            store.get(self.record.id)
 
     def test_result_identity_and_transaction_rollback(self):
         store = ResultStore(self.path, account="demo@example.test")
@@ -200,6 +240,49 @@ class GmailRunTest(unittest.TestCase):
                             ResultStore(self.path, account="demo@example.test"), limit=1, classified_at=UTC_TIME)
         self.assertEqual(result["results"][0]["bucket"], "actionable")
 
+    def test_transient_inference_failure_is_not_saved_and_can_recover(self):
+        class Broken:
+            def complete(self, *args):
+                raise ProviderUnavailable("private error")
+        store = ResultStore(self.path, account="demo@example.test")
+        failed = run_triage(self.source(), Broken(), store, save=True, apply=True, limit=1,
+                            require_live=True, classified_at=UTC_TIME)
+        self.assertEqual(failed["summary"]["failed"], 1)
+        self.assertIsNone(store.get("gmail:1"))
+        self.assertEqual(self.api.label_map, {})
+        recovered = run_triage(self.source(), FakeModel(payload()), store, save=True, apply=True,
+                               limit=1, require_live=True, classified_at=UTC_TIME)
+        self.assertEqual(recovered["summary"]["applied"], 1)
+
+    def test_fatal_error_preserves_completed_work_and_stops_further_calls(self):
+        class Expiring(FakeModel):
+            def complete(self, task, prompt):
+                if self.calls:
+                    raise AuthenticationError("private token")
+                return super().complete(task, prompt)
+        result = run_triage(self.source(), Expiring(payload()),
+                            ResultStore(self.path, account="demo@example.test"),
+                            save=True, apply=True, classified_at=UTC_TIME)
+        self.assertEqual(result["fatal_error"], "AuthenticationError")
+        self.assertEqual(result["summary"]["applied"], 1)
+        self.assertEqual(result["summary"]["failed"], 1)
+        self.assertEqual(result["summary"]["unprocessed"], 1)
+        self.assertEqual(result["errors"][0]["fixture_id"], "demo-email-002")
+        self.assertNotIn("private token", json.dumps(result))
+
+    def test_cli_gmail_apply_with_injected_providers_and_fatal_return_code(self):
+        arguments = ["run", "--gmail", "--live", "--apply", "--token", "/private/runtime.json",
+                     "--manifest", str(self.manifest), "--account", "demo@example.test", "--db", str(self.path)]
+        with patch("triage.credentials.gmail_from_token", return_value=self.gmail), \
+                patch("triage.__main__.RouterModel", return_value=FakeModel(payload())), \
+                contextlib.redirect_stdout(io.StringIO()) as output:
+            self.assertEqual(main(arguments), 0)
+        self.assertEqual(json.loads(output.getvalue())["summary"]["applied"], 3)
+        with patch("triage.credentials.gmail_from_token", side_effect=AuthenticationError("private")), \
+                contextlib.redirect_stderr(io.StringIO()) as errors:
+            self.assertEqual(main(arguments), 2)
+        self.assertNotIn("private", errors.getvalue())
+
     def test_overlong_body_requires_review(self):
         body = "x" * 20001
         self.api.message_map["1"]["payload"]["parts"][0]["body"]["data"] = base64.urlsafe_b64encode(body.encode()).decode()
@@ -211,6 +294,28 @@ class GmailRunTest(unittest.TestCase):
 
 
 class RunCommandTest(unittest.TestCase):
+    def test_all_75_fixture_records_save_replay_and_compare_offline(self):
+        from triage.evaluate import compare_results
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "offline.db"
+            arguments = ["run", "--save", "--db", str(path)]
+            with contextlib.redirect_stdout(io.StringIO()) as first:
+                self.assertEqual(main(arguments), 0)
+            with contextlib.redirect_stdout(io.StringIO()) as second:
+                self.assertEqual(main(arguments), 0)
+            original, replay = json.loads(first.getvalue()), json.loads(second.getvalue())
+            self.assertEqual(original["summary"]["total"], 75)
+            self.assertEqual(replay["summary"]["reused"], 75)
+            self.assertEqual(replay["results"], [
+                {**row, "reused": True} for row in original["results"]
+            ])
+            comparison = compare_results(FIXTURE, replay)
+            self.assertEqual(comparison["evaluated"], 75)
+            self.assertEqual(comparison["review_count"], 75)
+            self.assertFalse(comparison["measured_model_quality"])
+            with sqlite3.connect(path) as conn:
+                self.assertEqual(conn.execute("SELECT count(*) FROM triage_results").fetchone()[0], 75)
+
     def test_run_is_dry_by_default_and_save_is_explicit(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "keeper.db"
@@ -222,6 +327,37 @@ class RunCommandTest(unittest.TestCase):
                 self.assertEqual(main(["run", "--db", str(path), "--limit", "2", "--save"]), 0)
             with sqlite3.connect(path) as conn:
                 self.assertEqual(conn.execute("SELECT count(*) FROM triage_results").fetchone()[0], 2)
+
+    def test_live_run_rejects_saved_offline_decisions(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "keeper.db"
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(main(["run", "--db", str(path), "--limit", "1", "--save"]), 0)
+            with patch("triage.__main__.RouterModel", return_value=FakeModel(payload())), \
+                    contextlib.redirect_stdout(io.StringIO()) as output:
+                self.assertEqual(main(["run", "--db", str(path), "--limit", "1", "--live"]), 1)
+            self.assertEqual(json.loads(output.getvalue())["summary"]["failed"], 1)
+
+    def test_compare_command_is_read_only_and_rejects_invalid_report(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "report.json"
+            with contextlib.redirect_stdout(io.StringIO()) as output:
+                self.assertEqual(main(["run", "--db", str(Path(directory) / "absent.db"), "--limit", "1"]), 0)
+            path.write_text(output.getvalue())
+            with contextlib.redirect_stdout(io.StringIO()) as scored:
+                self.assertEqual(main(["compare", "--report", str(path)]), 0)
+            self.assertFalse(json.loads(scored.getvalue())["measured_model_quality"])
+            path.write_text("{}")
+            with contextlib.redirect_stderr(io.StringIO()):
+                self.assertEqual(main(["compare", "--report", str(path)]), 2)
+
+    def test_fixture_rejects_gmail_options_and_database_failure_returns_nonzero(self):
+        with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+            main(["run", "--account", "demo@example.test"])
+        with patch("triage.__main__.ResultStore", side_effect=sqlite3.OperationalError("private path")), \
+                contextlib.redirect_stderr(io.StringIO()) as errors:
+            self.assertEqual(main(["run"]), 2)
+        self.assertNotIn("private path", errors.getvalue())
 
     def test_apply_requires_live_verified_gmail_source_before_any_setup(self):
         for args in [["run", "--apply"], ["run", "--gmail", "--apply"],

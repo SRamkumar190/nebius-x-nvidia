@@ -21,7 +21,9 @@ nh() { nemohermes "$SANDBOX" "$@"; }
 # uploaded straight from the repo checkout.
 echo "== stage code, the keeper command and skills"
 mkdir -p "$STAGE/app" "$STAGE/bin" "$STAGE/skills"
-cp -r "$ROOT/router" "$ROOT/memory" "$ROOT/skills" "$ROOT/keeper_core" "$ROOT/integrations" "$STAGE/app/"
+cp -r "$ROOT/router" "$ROOT/memory" "$ROOT/skills" "$ROOT/keeper_core" "$ROOT/integrations" "$ROOT/triage" "$STAGE/app/"
+mkdir -p "$STAGE/app/demo/fixtures"
+cp "$ROOT/demo/fixtures/inbox_75.json" "$STAGE/app/demo/fixtures/"
 rm -rf "$STAGE/app/skills/hermes"
 find "$STAGE/app" -name __pycache__ -prune -exec rm -rf {} +
 cp "$ROOT/agent/bin/keeper" "$STAGE/bin/keeper"

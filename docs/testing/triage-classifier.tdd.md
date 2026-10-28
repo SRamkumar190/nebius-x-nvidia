@@ -87,3 +87,47 @@ changed content with the same key still raises IdempotencyConflict.
 
     .venv/bin/python -m unittest discover -s tests -q
     All 153 tests pass. The earlier baseline failure is now resolved.
+
+## Phase 4 completion work
+
+Source requirements: master plan Phase 4; architecture and live acceptance
+matrix are in docs/phase4-triage-report.md.
+
+RED checkpoint c3ecf3e adds workflow tests that fail on missing triage.sources.
+Evaluation tests independently failed on missing triage.evaluate before that
+implementation. Later regressions reproduced a frozen transient model failure,
+discarded partial authentication-error reports, and stale source reuse before
+their fixes.
+
+GREEN guarantees:
+
+| Guarantee | Evidence |
+| --- | --- |
+| Dry run creates no product state or Gmail mutations | GmailRunTest.test_dry_run_has_no_product_writes_or_gmail_mutations |
+| Email/result save is atomic and metadata round-trips | StateTest.test_save_roundtrip_replay_and_conflict_preserve_original and test_result_identity_and_transaction_rollback |
+| Existing Phase 3 data upgrades without loss | StateTest.test_version_two_upgrade_preserves_ingested_email |
+| Wrong accounts and synthetic message identities cannot apply labels | GmailRunTest account/manifest tests |
+| Repeat apply reuses decisions and adds no duplicate provider effects | GmailRunTest.test_apply_replays_saved_decisions_after_restart_and_preserves_inbox |
+| Failed label delivery recovers from the saved plan | GmailRunTest.test_label_failure_retains_plan_for_retry_without_model_recall |
+| Temporary inference failures remain retryable | GmailRunTest.test_transient_inference_failure_is_not_saved_and_can_recover |
+| Approved user corrections and changed source content are not overwritten | StateTest correction/content tests |
+| Fatal errors retain partial progress | GmailRunTest.test_fatal_error_preserves_completed_work_and_stops_further_calls |
+| Runtime token paths, permissions, scopes, and OAuth endpoints are checked | tests/test_triage_credentials.py |
+| Full fixture saves/replays/scores and launcher dispatch works | RunCommandTest.test_all_75_fixture_records_save_replay_and_compare_offline and test_launcher_dispatches_triage_without_sandbox_dependencies |
+| Evaluation counts failures and reviews and reports missing coverage | tests/test_triage_evaluate.py |
+
+Validation:
+
+    .venv/bin/python -m unittest discover -s tests -q
+    All 200 tests pass.
+
+    .venv/bin/python -m coverage run --branch --source=triage --data-file=/private/tmp/keeper-phase4-01a180.coverage -m unittest tests.test_triage tests.test_triage_preview tests.test_triage_run tests.test_triage_credentials tests.test_triage_evaluate -q
+    .venv/bin/python -m coverage report --data-file=/private/tmp/keeper-phase4-01a180.coverage --show-missing --fail-under=80
+    76 triage tests pass; total branch-aware coverage is 96%.
+
+    bash -n agent/bin/keeper agent/deploy.sh
+    Shell syntax checks pass.
+
+No live provider call or sandbox deployment occurred. Live Nebius/Gmail quality,
+real label application, and deployed acceptance remain pending the teammate's
+credentials and environment.

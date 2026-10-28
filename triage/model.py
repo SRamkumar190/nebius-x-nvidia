@@ -11,6 +11,10 @@ SYSTEM = (
 )
 
 
+class ModelConfigurationError(ValueError):
+    """A permanent model request error that must stop batch processing."""
+
+
 @dataclass(frozen=True)
 class RouterModel:
     settings: object
@@ -37,7 +41,7 @@ class RouterModel:
                 raise RateLimited("Nebius rate limit reached") from None
             if exc.status_code == 408 or exc.status_code >= 500:
                 raise ProviderUnavailable("Nebius request failed") from None
-            raise ValueError("Nebius request configuration rejected") from None
+            raise ModelConfigurationError("Nebius request configuration rejected") from None
         if not response.choices:
             raise InvalidProviderResponse("No model completion")
         choice = response.choices[0]
