@@ -267,6 +267,10 @@ class LiveCalendar:
                     calendarId=self._calendar_id, eventId=provider_id))
                 if recovered.get("extendedProperties", {}).get("private", {}).get("keeperDeadlineKey") != key:
                     raise IdempotencyConflict("provider event ID collision")
+                if recovered.get("summary") != summary or _start(recovered) != deadline_at:
+                    self._execute(lambda: self._service.events().patch(
+                        calendarId=self._calendar_id, eventId=provider_id,
+                        body=body, sendUpdates="none"))
             if not isinstance(provider_id, str) or not provider_id:
                 raise InvalidProviderResponse("Calendar creation returned no event ID")
             if provider_id != body["id"]:

@@ -201,8 +201,8 @@ These are initial assignments, **not assertions about unverified individual spec
 **Depends on:** Phases 2, 4, 5  
 **Output:** Actionable inbox becomes calendar events and unsent drafts
 
-1. Extract deadline candidates from relevant email with provenance and uncertainty flags.
-2. Validate dates and timezone assumptions; do not schedule ambiguous or past dates without an explicit review policy.
+1. Extract deadline candidates from relevant email with provenance and uncertainty flags.-
+2. Validate dates and timezone assumptions; do not schedule ambiguous or past dates without an explicit review policy.-
 3. Create a Calendar event for each confirmed deadline using an application/opportunity idempotency key.
 4. Store the provider event ID and update that event when an email explicitly extends a deadline.
 5. Test duplicate deadline emails, shortened deadlines, moved deadlines, and API retry scenarios.

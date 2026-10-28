@@ -217,6 +217,20 @@ class CalendarTest(unittest.TestCase):
         self.assertEqual(self.mapping()[1], provider_id)
         self.assertEqual(len(self.service.items), 1)
 
+    def test_collision_recovery_applies_requested_deadline(self):
+        provider_id = self.calendar.create_deadline(
+            "deadline:1", self.initial, "Apply", idempotency_key="key:1")
+        with closing(sqlite3.connect(self.db)) as conn, conn:
+            conn.execute("UPDATE deadline_events SET provider = NULL, provider_event_id = NULL WHERE id = 'deadline:1'")
+        self.service.hide_key_search = True
+        later = datetime(2026, 11, 3, 12, tzinfo=timezone.utc)
+        recovered = LiveCalendar(self.service, self.db, now=lambda: self.initial)
+        self.assertEqual(recovered.upsert_deadline(
+            "deadline:1", later, "Apply later", idempotency_key="key:1"), provider_id)
+        self.assertEqual(self.service.items[provider_id]["start"]["dateTime"], "2026-11-03T12:00:00Z")
+        self.assertEqual(self.mapping()[2], to_storage(later))
+        self.assertEqual(len(self.service.items), 1)
+
     def test_patch_rate_limit_retries_without_creating(self):
         provider_id = self.calendar.create_deadline("deadline:1", self.initial, "Apply", idempotency_key="key:1")
         self.service.failures["patch"] = [error(403, "userRateLimitExceeded", retry_after=2)]
