@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .applications import apply_manual_correction, get_application, list_applications
+from .application_activity import activity_for_application
 from .contracts import ApplicationStatus
 from .db import default_db_path, migrate
 from .time import to_storage
@@ -73,6 +74,7 @@ def _history(conn: sqlite3.Connection, app) -> dict:
          "decision_outcome": change.decision_outcome}
         for change in app.status_history
     ]
+    result["activity"] = activity_for_application(conn, app.id)
     return result
 
 

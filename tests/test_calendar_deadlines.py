@@ -1,4 +1,5 @@
 import sqlite3
+from contextlib import closing
 import tempfile
 import unittest
 from datetime import datetime, timedelta, timezone
@@ -22,7 +23,7 @@ class CalendarDeadlineSyncTest(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.path = Path(self.tmp.name) / "keeper.db"
         migrate(self.path)
-        with sqlite3.connect(self.path) as conn:
+        with closing(sqlite3.connect(self.path)) as conn, conn:
             conn.execute("PRAGMA foreign_keys = ON")
             conn.execute(
                 """INSERT INTO opportunities
@@ -54,13 +55,13 @@ class CalendarDeadlineSyncTest(unittest.TestCase):
         )
         triage = TriageResult(f"triage:{number}", email.id, TriageBucket.DUE,
                               "Career deadline", True, (), None, None, None, NOW)
-        with sqlite3.connect(self.path) as conn:
+        with closing(sqlite3.connect(self.path)) as conn, conn:
             conn.execute("PRAGMA foreign_keys = ON")
             insert_email_once(conn, email)
         return extract_deadline_candidates(email, triage, now=NOW)[0]
 
     def row(self):
-        with sqlite3.connect(self.path) as conn:
+        with closing(sqlite3.connect(self.path)) as conn, conn:
             return conn.execute(
                 """SELECT id, application_id, source_email_id, deadline_at, evidence,
                           provider, provider_event_id FROM deadline_events"""
@@ -132,6 +133,21 @@ class CalendarDeadlineSyncTest(unittest.TestCase):
         self.assertEqual(self.sync(extension).status, "updated")
         self.assertEqual(self.row()[6], original_id)
         self.assertEqual(self.waits, [2])
+        self.assertEqual(len(self.service.items), 1)
+
+    def test_application_attached_later_gets_existing_event_history(self):
+        first = self.candidate(1, "Apply by 2026-11-02T09:30:00Z.")
+        created = sync_deadline_candidate(
+            self.path, self.calendar, first, opportunity_id="opp:1", now=NOW)
+        self.assertEqual(created.status, "created")
+        self.assertIsNone(self.row()[1])
+        self.assertEqual(self.sync(first).status, "unchanged")
+        self.assertEqual(self.row()[1], "app:1")
+        with closing(sqlite3.connect(self.path)) as conn, conn:
+            activities = conn.execute(
+                "SELECT kind, source_email_id, provider_id FROM application_activity"
+            ).fetchall()
+        self.assertEqual(activities, [("calendar_created", "gmail:1", created.provider_event_id)])
         self.assertEqual(len(self.service.items), 1)
 
 

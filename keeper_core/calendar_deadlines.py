@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from .adapters import CalendarAdapter, IdempotencyConflict
+from .application_activity import record_activity
 from .deadlines import (
     DeadlineCandidate, DeadlineReviewPolicy, DeadlineReviewRequired,
     validated_deadline_at,
@@ -103,7 +104,7 @@ def sync_deadline_candidate(
             prior_provider_id = None
             prior_deadline = None
         else:
-            prior_app, prior_email, prior_stamp, _, provider, prior_provider_id = existing
+            prior_app, prior_email, prior_stamp, prior_evidence, provider, prior_provider_id = existing
             if prior_app is not None and application_id is not None and prior_app != application_id:
                 raise IdempotencyConflict("deadline event is linked to another application")
             if provider not in (None, "google-calendar"):
@@ -122,6 +123,19 @@ def sync_deadline_candidate(
                 if deadline_at > prior_deadline and not _EXPLICIT_CHANGE.search(candidate.evidence) and policy is None:
                     return _review(event_id, prior_provider_id, "changed deadline lacks explicit extension evidence")
             elif prior_provider_id is not None:
+                if prior_app is None and application_id is not None:
+                    with conn:
+                        conn.execute(
+                            "UPDATE deadline_events SET application_id = ? WHERE id = ?",
+                            (application_id, event_id),
+                        )
+                        if prior_email and prior_evidence:
+                            record_activity(
+                                conn, application_id=application_id, kind="calendar_created",
+                                source_email_id=prior_email, source_evidence=prior_evidence,
+                                related_id=event_id, provider_id=prior_provider_id,
+                                detail=f"Deadline scheduled for {prior_stamp}", occurred_at=now,
+                            )
                 # The provider may have accepted a previous update before the
                 # final source/evidence write completed. Reconcile that gap
                 # only from a newer, explicit change email.
@@ -138,6 +152,15 @@ def sync_deadline_candidate(
                                 (candidate.source_email_id, candidate.evidence,
                                  application_id, to_storage(now), event_id),
                             )
+                            if application_id is not None:
+                                record_activity(
+                                    conn, application_id=application_id, kind="calendar_updated",
+                                    source_email_id=candidate.source_email_id,
+                                    source_evidence=candidate.evidence, related_id=event_id,
+                                    provider_id=prior_provider_id,
+                                    detail=f"Deadline moved to {to_storage(deadline_at)}",
+                                    occurred_at=now,
+                                )
                 return CalendarSyncResult("unchanged", event_id, prior_provider_id, "deadline already scheduled")
     summary = f"Application deadline: {opportunity[0]} — {opportunity[1]}"
     provider_id = calendar.upsert_deadline(
@@ -153,5 +176,15 @@ def sync_deadline_candidate(
             (application_id, candidate.source_email_id, to_storage(deadline_at),
              candidate.evidence, provider_id, to_storage(now), event_id),
         )
+        if application_id is not None:
+            record_activity(
+                conn, application_id=application_id,
+                kind="calendar_created" if prior_provider_id is None else "calendar_updated",
+                source_email_id=candidate.source_email_id, source_evidence=candidate.evidence,
+                related_id=event_id, provider_id=provider_id,
+                detail=f"Deadline scheduled for {to_storage(deadline_at)}" if prior_provider_id is None
+                else f"Deadline moved to {to_storage(deadline_at)}",
+                occurred_at=now,
+            )
     return CalendarSyncResult("created" if prior_provider_id is None else "updated",
                               event_id, provider_id, "calendar event synchronized")

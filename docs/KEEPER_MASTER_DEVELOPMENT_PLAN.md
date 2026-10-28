@@ -203,11 +203,11 @@ These are initial assignments, **not assertions about unverified individual spec
 
 1. Extract deadline candidates from relevant email with provenance and uncertainty flags.-
 2. Validate dates and timezone assumptions; do not schedule ambiguous or past dates without an explicit review policy.-
-3. Create a Calendar event for each confirmed deadline using an application/opportunity idempotency key.
-4. Store the provider event ID and update that event when an email explicitly extends a deadline.
-5. Test duplicate deadline emails, shortened deadlines, moved deadlines, and API retry scenarios.
-6. Draft context-aware replies with Super, including appropriate subject/thread context and concise professional tone.
-7. Create Gmail drafts through the draft API only; prohibit send operations in adapter interfaces and tests.
+3. Create a Calendar event for each confirmed deadline using an application/opportunity idempotency key.-
+4. Store the provider event ID and update that event when an email explicitly extends a deadline.-
+5. Test duplicate deadline emails, shortened deadlines, moved deadlines, and API retry scenarios.-
+6. Draft context-aware replies with Super, including appropriate subject/thread context and concise professional tone.-
+7. Create Gmail drafts through the draft API only; prohibit send operations in adapter interfaces and tests.-
 8. Flag uncertain recruiter identity, missing context, and sensitive details for manual review rather than hallucinating them.
 9. Integrate event and draft links into the triage summary and application history.
 10. Demonstrate that a deadline extension moves the original event and that no draft has been sent.
