@@ -9,8 +9,12 @@ CAREER = re.compile(
 SCAM_PATTERNS = (
     ("upfront_fee", r"\b(?:upfront|registration|processing|release) fee\b"),
     ("urgency", r"\b(?:urgent|today|act now|immediately|last chance)\b"
-                r"|\b(?:in|within) (?:an?|one|two|\d{1,2}) (?:minutes?|hours?)\b"),
-    ("unrealistic_pay", r"\$\s?\d{5,}|\b\d{5,}\s*(?:usd|dollars)\b"),
+                r"|\b(?:in|within) (?:an?|one|two|three|five|ten|fifteen|twenty|thirty|\d{1,2}) "
+                r"(?:minutes?|hours?)\b"),
+    # Large sums, or hourly pay of $150 or more: far above student internship rates.
+    ("unrealistic_pay", r"\$\s?\d{5,}|\b\d{5,}\s*(?:usd|dollars)\b"
+                        r"|\$\s?(?:1[5-9]\d|[2-9]\d\d|\d{1,3}(?:,\d{3})+|\d{4,})(?:\.\d+)?"
+                        r"\s*(?:/\s*|per |an |a )(?:hour|hr)\b"),
 )
 FREE_MAIL = frozenset({"gmail.com", "yahoo.com", "outlook.com", "hotmail.com"})
 

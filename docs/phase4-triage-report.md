@@ -85,6 +85,18 @@ phishing as junk, career as false for non-career mail, and application receipts 
 actionable, and the deterministic urgency check now catches short time limits such as
 "closes in one hour". The career guard itself is unchanged. Rerun the comparison to measure v3.
 
+## Second live run (triage-v3)
+
+Same 75 emails on Windows: 74 of 75 correct (98.7%), 1 in review, 0 failures, 0 career
+emails sent to junk. Junk 18/19, actionable 19/19, due 19/19 with exact deadlines,
+newsletter 18/18. The one miss was a fake account alert sent to review, not junk.
+Scam warnings: 18 of 19 caught, 2 false positives (the model flagged a plain promotion).
+
+The missed scam was a fake internship: "$900 per hour with no interview. Act in ten
+minutes." The deterministic checks now flag hourly pay of $150 or more and spelled-out
+short limits such as "ten minutes". On their own, without the model, they flag all 19
+scam emails in the fixture and none of the others.
+
 ## Live acceptance for the teammate
 
 Use triage/README.md's exact commands, with a disposable seeded Gmail account,
