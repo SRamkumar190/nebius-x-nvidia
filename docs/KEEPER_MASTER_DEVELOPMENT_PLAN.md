@@ -3,11 +3,86 @@
 **Version 1.0 — Five-Developer Hackathon Execution Roadmap**  
 **Project:** Keeper — Secure, Adaptive Student Career Agent  
 **Event:** Nebius × NVIDIA Global AI Hackathon  
-**Sprint:** October 24–29, 2026 (six-day plan; verify official deadline/time zone)  
+**Sprint:** October 24–30, 2026. Submission deadline confirmed: October 30 (confirm the time zone).  
 **Team:** Rishi, Sid, Zayd, Vi, Sanjay  
 **Status:** Foundation partly implemented; integrations, end-to-end features, evaluation, security proof, and submission pending.
 
 > **Operating principle:** Ship one secure, reproducible, convincing end-to-end workflow before expanding the feature surface. The project wins or loses on demonstrated behavior, not the number of checkboxes.
+
+---
+
+## FINAL STRETCH: OCTOBER 28 TO 30 (current assignments)
+
+This section replaces the day-by-day table further down for the last three days. Lanes follow the ownership matrix in 0.3.
+
+### Where we are on October 28
+
+| Piece | Status |
+| --- | --- |
+| Triage with career protection and scam warnings | Done. 74 of 75 (98.7%) live on the demo fixture with prompt triage-v3 (#9, #10). Deadlines 19/19 exact |
+| Evaluation of triage | Done for Nano: `python -m triage compare` |
+| Gmail, Calendar, Telegram, Tavily adapters | Code and fakes exist. No live test yet |
+| Triage on the real demo Gmail | Not done. Needs the seeded throwaway account |
+| Tracker, Gmail drafts, calendar deadlines | Building blocks exist (`keeper_core/workflow.py`, adapters). Nothing connects them to triage results yet |
+| Telegram summary | Not started |
+| Radar | Not started |
+| Network lockdown and attack email | Not started. Only the Token Factory policy exists |
+| Dashboard and replay | Not started (`dashboard/` is empty) |
+| Backup video | Not started |
+
+### How the action step fits together
+
+One command, `keeper act`, reads saved triage results and does three things. Each owner builds one module behind the same small interface, so nobody waits on anyone else:
+
+| Module | Owner | Does | Never does |
+| --- | --- | --- | --- |
+| `actions/tracker.py` | Rishi | Confirmation, interview and rejection emails move an application forward, once per email | Changes a status without the email that caused it |
+| `actions/drafts.py` | Zayd | One Gmail draft per actionable email (Super), once per email | Sends anything |
+| `actions/deadlines.py` | Vi | One calendar event per verified deadline. An extension moves the existing event | Creates a second event for the same application |
+| `keeper act` command | Rishi | Calls the three modules in order and prints a summary | |
+
+Claude drafts the shared interface and an empty version of each module first thing on October 28, so all three can start from the same code.
+
+### Assignments
+
+**Sid (sandbox, OAuth, security)**
+- Oct 28: create the Google setup (throwaway Gmail, Cloud project with Gmail and Calendar APIs, one OAuth client for Keeper and one for seeding). Seed the 75 demo emails, run triage on the real inbox (dry run, then `--apply`), screenshot the labeled inbox.
+- Oct 29: deploy to the sandbox, run `keeper triage run` and `keeper act` there, apply the lockdown policy, send the attack email and capture the blocked request in the audit log, test the Telegram bot. Record the backup video in the evening.
+- Oct 30: fresh seed, full run, final video, submit.
+
+**Rishi (backend, tracker, orchestration)**
+- Oct 28: `actions/tracker.py` and the `keeper act` command. Telegram summary after each run ("12 new: 3 due, next deadline Fri; 4 actionable; 2 scam warnings").
+- Oct 29: merge Zayd's and Vi's modules into `keeper act`, run it end to end on the fixture, review PRs. Learn the deploy steps with Sid so two people can run the demo.
+
+**Zayd (triage, drafts, benchmarking)**
+- Oct 28: `actions/drafts.py`. Then run the 75 fixture emails through Super as well as Nano and record accuracy, cost and speed.
+- Oct 29: finish drafts, help Rishi with the end-to-end run. If Sanjay is unavailable, take over the dashboard basics.
+
+**Vi (radar, Tavily, Calendar)**
+- Oct 28: `actions/deadlines.py`, including the extension case.
+- Oct 29: `keeper radar run`: Tavily searches from `memory/profile.md`, Nano scores 1 to 10, dedupe against what's been seen, top 5 to Telegram.
+- If Vi is unavailable: Rishi takes deadlines on Oct 29 and the radar is cut.
+
+**Sanjay (evaluation, dashboard, demo)**
+- Oct 28: the dashboard, one static HTML page built by a Python script with Chart.js: the 80% to 98.7% triage result, accuracy per bucket, cost per model from `router.db`.
+- Oct 29: add the tracker, Zayd's model comparison and the blocked requests. Write the video script and shot list from the final demonstration sequence in Part VIII.
+- If Sanjay is unavailable: Zayd builds a simpler dashboard and Sid writes the shot list.
+
+**Claude (coding support, not an owner)**
+- Oct 28: the shared interface for `actions/`, then help whichever module is behind. Review every PR before merge.
+- Oct 29 morning: the OpenShell lockdown policy (Token Factory, Google, Telegram and Tavily only) and the attack email for the demo inbox, for Sid to apply.
+- Oct 30: fixes from the full run and the final `NOTES_FEEDBACK.md`.
+
+### Checkpoints
+
+- **Oct 28, end of day:** labeled real inbox screenshot, `keeper act` works on the fixture with fakes, dashboard shows the triage numbers.
+- **Oct 29, midday:** full run in the sandbox. If the radar isn't working by then, cut it.
+- **Oct 29, end of day:** lockdown proof captured and the backup video recorded. After this, no new features, only fixes.
+- **Oct 30:** fresh run, final video, README, submit.
+
+**Cut order for these three days:** replay, then radar, then the model comparison, then Telegram summary polish. Never cut: triage on real Gmail, drafts, calendar deadline, tracker update, the lockdown with the attack email, the eval numbers, and the video.
+
+All work goes on short-lived branches with pull requests into `claude/dreamy-tesla-7tv0ko`, with offline tests that use the fakes.
 
 ---
 

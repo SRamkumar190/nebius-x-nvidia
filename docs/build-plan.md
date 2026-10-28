@@ -1,5 +1,7 @@
 # Keeper build plan
 
+> Superseded for October 28 to 30 by the final-stretch section at the top of [KEEPER_MASTER_DEVELOPMENT_PLAN.md](KEEPER_MASTER_DEVELOPMENT_PLAN.md), which covers all five teammates.
+
 Six days, two builders plus Claude. Day 1 is October 24, and day 6 is submission. Phase 1 and phase 2 items 1 to 3 are done: the sandbox, the model router, memory, and learning from corrections.
 
 **The product in one line:** Keeper runs a student's internship pipeline from first email to decision. It finds opportunities, checks them, plans the deadlines, drafts replies, tracks every application, learns from corrections, and runs in a sandbox that blocks hijack attempts.
