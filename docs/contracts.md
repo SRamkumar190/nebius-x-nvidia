@@ -61,6 +61,8 @@ Uniqueness is enforced for `email_records.id`, `(provider, provider_id)` email m
 
 Migration `006_radar_observations.sql` adds one append-only observation per opportunity and radar run. The opportunity row retains its original discovery identity and the latest score and eligibility; prior decisions and alternate observed URLs stay in observation history. `keeper_core.radar_store` resolves repeats by canonical URL or normalized organization/title, and stops on identity conflicts. See [radar discovery](radar-discovery.md) for the scoring rubric and eligibility evidence rules.
 
+Migration `007_radar_digest_snapshots.sql` preserves the exact Telegram top-five digest per run and recipient. Its body and selected opportunity IDs are frozen before delivery so a retry cannot change content under the same idempotency key. Verified application-page deadlines use the existing `deadline_events` mapping and require explicit UTC-resolvable source evidence; search snippets never schedule events.
+
 ## Workflow rules and precedence
 
 `keeper_core.workflow` implements the state and identity functions; `keeper_core.ingest` implements idempotent insertion for emails and opportunities. `keeper_core.applications` creates and reads applications, applies evidence-backed transitions, and resolves message identity. Automatic email callers use `apply_message_transition`; it returns a review resolution without changing state when identity is uncertain. The caller owns the SQLite transaction and must enable foreign keys on its connection.
