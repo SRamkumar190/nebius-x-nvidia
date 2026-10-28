@@ -2,14 +2,20 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+import sqlite3
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import TYPE_CHECKING, Mapping
 from urllib.parse import urlsplit
 
-from .adapters import SearchHit, TavilyAdapter
+from .adapters import InvalidProviderResponse, ModelAdapter, SearchHit, TavilyAdapter
 from .contracts import Eligibility, Opportunity
 from .workflow import canonical_url, normalize_identity, opportunity_identity_key, opportunity_key, stable_key
+
+if TYPE_CHECKING:
+    from .radar_enrichment import VerifiedPostingRequirements
+    from .radar_store import PersistedRadarRun
 
 
 @dataclass(frozen=True, slots=True)
@@ -18,6 +24,7 @@ class RadarProfile:
     graduation_year: int | None
     majors: tuple[str, ...]
     locations: tuple[str, ...]
+    location_unrestricted: bool
     remote: str | None
     relocation: str | None
     authorization_supplied: bool
@@ -38,6 +45,12 @@ class RadarResults:
     queries: tuple[str, ...]
     opportunities: tuple[Opportunity, ...]
     skipped: tuple[SkippedHit, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class RadarRunOutcome:
+    results: RadarResults
+    persisted: PersistedRadarRun
 
 
 _FIELDS = {
@@ -90,6 +103,7 @@ def load_profile(path: Path) -> RadarProfile:
     return RadarProfile(
         _list(get("Target roles", "Roles")), None if year == "Not specified" else int(year),
         _list(get("Education", "Major")), _list(get("Location constraints", "Acceptable locations")),
+        get("Location constraints", "Acceptable locations") == "Any",
         None if remote == "Not specified" else remote,
         None if relocation == "Not specified" else relocation,
         supplied == "Yes", None if statement == "Not specified" else statement,
@@ -233,3 +247,44 @@ def search_opportunities(profile: RadarProfile, tavily: TavilyAdapter, *, discov
     hits = tuple(hit for query in queries for hit in tavily.search(query, limit=results_per_query))
     result = normalize_hits(profile, hits, discovered_at=discovered_at)
     return RadarResults(queries, result.opportunities, result.skipped)
+
+
+def run_radar(profile: RadarProfile, tavily: TavilyAdapter, model: ModelAdapter,
+              conn: sqlite3.Connection, *, run_id: str, discovered_at: datetime,
+              verified_requirements: Mapping[str, VerifiedPostingRequirements] | None = None,
+              max_queries: int = 6, results_per_query: int = 5) -> RadarRunOutcome:
+    """Search, score with Nano, check verified requirements, and save history.
+
+    Caller owns the SQLite transaction and provides any application-page
+    evidence. No requirement is inferred from a search snippet.
+    """
+    from .radar_enrichment import check_eligibility, score_opportunity
+    from .radar_store import persist_radar_run
+
+    if not 1 <= results_per_query <= 20:
+        raise ValueError("results_per_query must be between 1 and 20")
+    queries = build_queries(profile, max_queries=max_queries)
+    hits = tuple(hit for query in queries for hit in tavily.search(query, limit=results_per_query))
+    normalized = normalize_hits(profile, hits, discovered_at=discovered_at)
+    by_url: dict[str, SearchHit] = {}
+    for hit in hits:
+        try:
+            url = canonical_url(hit.url)
+        except ValueError:
+            continue
+        if _source_rank(url) < 2:
+            by_url.setdefault(url, hit)
+    accepted: list[Opportunity] = []
+    skipped = list(normalized.skipped)
+    evidence = verified_requirements or {}
+    for opportunity in normalized.opportunities:
+        try:
+            scored = score_opportunity(profile, opportunity, by_url[opportunity.canonical_url], model)
+        except InvalidProviderResponse as exc:
+            skipped.append(SkippedHit(opportunity.canonical_url, f"Nano relevance score unavailable: {exc}"))
+            continue
+        accepted.append(check_eligibility(profile, scored, evidence.get(opportunity.canonical_url)))
+    persisted = persist_radar_run(conn, tuple(accepted), run_id=run_id)
+    resolved = tuple(replace(item, id=keeper_id)
+                     for item, keeper_id in zip(accepted, persisted.resolved_ids))
+    return RadarRunOutcome(RadarResults(queries, resolved, tuple(skipped)), persisted)

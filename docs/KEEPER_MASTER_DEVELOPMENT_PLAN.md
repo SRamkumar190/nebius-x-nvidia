@@ -221,12 +221,12 @@ These are initial assignments, **not assertions about unverified individual spec
 **Output:** `keeper radar run` with relevant opportunities
 
 1. Define `profile.md` fields for target roles, graduation year, major, location constraints, work authorization where voluntarily supplied, and opportunity preferences.-
-2. Build bounded Tavily queries from profile fields; prefer primary application URLs and credible sources.
-3. Normalize search results into opportunities with canonical URLs, title, organization, source, and discovery timestamp.
-4. Add heuristic filtering for obvious mismatches, closed/duplicate results, and unsupported eligibility claims.
-5. Use Nano to score relevance on a documented 1–10 rubric and generate one-line evidence-based explanations.
-6. Check eligibility against explicitly known profile attributes; label unknown conditions `unverified` rather than ineligible.
-7. Deduplicate by canonical URL plus organization/title; preserve prior opportunity history across daily runs.
+2. Build bounded Tavily queries from profile fields; prefer primary application URLs and credible sources.-
+3. Normalize search results into opportunities with canonical URLs, title, organization, source, and discovery timestamp.-
+4. Add heuristic filtering for obvious mismatches, closed/duplicate results, and unsupported eligibility claims.-
+5. Use Nano to score relevance on a documented 1–10 rubric and generate one-line evidence-based explanations.-
+6. Check eligibility against explicitly known profile attributes; label unknown conditions `unverified` rather than ineligible.-
+7. Deduplicate by canonical URL plus organization/title; preserve prior opportunity history across daily runs.-
 8. Persist top candidates and send a concise top-five Telegram digest with links, scores, and reasons.
 9. Connect confidently verified deadlines to the calendar path; avoid treating search snippets as definitive closing dates.
 10. Test empty results, API outage, duplicate URLs, irrelevant jobs, unknown authorization, and repeat runs.

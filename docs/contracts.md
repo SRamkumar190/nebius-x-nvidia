@@ -59,6 +59,8 @@ Migration `001_initial.sql` stores every record type above. `application_status_
 
 Uniqueness is enforced for `email_records.id`, `(provider, provider_id)` email mappings, `opportunities.canonical_url`, `opportunities.dedupe_key`, the provider mappings for drafts and deadline events, and notification idempotency keys. A repeated email or posting should resolve to its existing record, never receive a fresh ID. The schema establishes constraints; ingestion and retry workflows will implement that resolution.
 
+Migration `006_radar_observations.sql` adds one append-only observation per opportunity and radar run. The opportunity row retains its original discovery identity and the latest score and eligibility; prior decisions and alternate observed URLs stay in observation history. `keeper_core.radar_store` resolves repeats by canonical URL or normalized organization/title, and stops on identity conflicts. See [radar discovery](radar-discovery.md) for the scoring rubric and eligibility evidence rules.
+
 ## Workflow rules and precedence
 
 `keeper_core.workflow` implements the state and identity functions; `keeper_core.ingest` implements idempotent insertion for emails and opportunities. `keeper_core.applications` creates and reads applications, applies evidence-backed transitions, and resolves message identity. Automatic email callers use `apply_message_transition`; it returns a review resolution without changing state when identity is uncertain. The caller owns the SQLite transaction and must enable foreign keys on its connection.
