@@ -10,6 +10,7 @@ from keeper_core.contracts import (
     TriageBucket,
 )
 from triage.classifier import classify_email
+from triage.rules import scam_signals
 
 
 UTC_TIME = datetime(2026, 10, 27, 12, tzinfo=timezone.utc)
@@ -248,6 +249,27 @@ class TriageBoundaryTest(unittest.TestCase):
         retry = model.calls[-1][1]
         self.assertIn("career must be boolean or null", retry)
         self.assertNotIn("private text", retry)
+
+    def test_prompt_defines_phishing_as_junk_and_non_career_mail_as_false(self):
+        # Seen live: phishing went to actionable, and prize mail got career null.
+        model = FakeModel(payload())
+        classify_email(email(), model, classified_at=UTC_TIME)
+        prompt = model.calls[0][1]
+        self.assertIn("phishing", prompt)
+        self.assertIn("false for everything else", prompt)
+        self.assertIn("application receipts", prompt)
+
+    def test_short_time_limits_count_as_urgency(self):
+        for body, urgent in [
+            ("Your Example Shop account closes in one hour. Visit the link to verify.", True),
+            ("Confirm within 24 hours or lose access.", True),
+            ("Reply in an hour.", True),
+            ("The fair is in one week.", False),
+            ("We post hourly updates.", False),
+        ]:
+            with self.subTest(body=body):
+                found = "urgency" in scam_signals(email(sender="news@example.test", body=body), ())
+                self.assertIs(found, urgent)
 
     def test_prompt_asks_for_an_array_of_scam_signals(self):
         model = FakeModel(payload())

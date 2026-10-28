@@ -1,5 +1,6 @@
 """Runtime-token checks run offline and never print token content."""
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -25,6 +26,7 @@ class RuntimeTokenTest(unittest.TestCase):
             "token_uri": "https://oauth2.googleapis.com/token", "scopes": list(SCOPES),
         }
 
+    @unittest.skipIf(os.name == "nt", "POSIX file modes; Gmail mode runs on WSL or Linux")
     def test_rejects_broad_permissions_and_credentials_inside_checkout(self):
         with self.assertRaises(ValueError):
             gmail_from_token(ROOT / "secrets/google-token.json", run_id="test")
@@ -56,6 +58,7 @@ class RuntimeTokenTest(unittest.TestCase):
                         gmail_from_token(token, run_id="test")
                     builder.assert_not_called()
 
+    @unittest.skipIf(os.name == "nt", "symlinks need admin rights on Windows")
     def test_rejects_symlink_or_oversized_credential(self):
         with tempfile.TemporaryDirectory() as directory:
             token = Path(directory) / "runtime.json"

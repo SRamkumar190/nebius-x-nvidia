@@ -1,4 +1,5 @@
 import sqlite3
+from contextlib import closing
 import subprocess
 import sys
 import tempfile
@@ -113,7 +114,7 @@ class KeeperDatabaseTest(unittest.TestCase):
 
     def test_detects_early_version_one_timestamp_checks(self):
         legacy = Path(self.tmp.name) / "legacy.db"
-        with sqlite3.connect(legacy) as conn:
+        with closing(sqlite3.connect(legacy)) as conn, conn:
             conn.execute("CREATE TABLE old_email (received_at TEXT CHECK (received_at LIKE '*Z'))")
             conn.execute("PRAGMA user_version = 1")
         with self.assertRaisesRegex(ValueError, "older version 1 timestamp checks"):
@@ -149,7 +150,7 @@ class KeeperDatabaseTest(unittest.TestCase):
             cwd=self.tmp.name, text=True, capture_output=True, check=True,
         )
         self.assertIn("schema version 3", result.stdout)
-        with sqlite3.connect(path) as conn:
+        with closing(sqlite3.connect(path)) as conn, conn:
             self.assertEqual(conn.execute("PRAGMA user_version").fetchone()[0], 3)
 
 

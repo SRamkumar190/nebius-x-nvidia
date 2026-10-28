@@ -144,6 +144,8 @@ After inference, compare the saved output to the fixture's gold answers:
 
     .venv/bin/python -m triage compare --report data/phase4-applied.json
 
+The report may be UTF-8 or the UTF-16 that Windows PowerShell's > redirect writes.
+
 The scorer maps Gmail provider IDs back through fixture_id, reports per-bucket
 accuracy, career-to-junk errors, scam precision/recall, deadline mismatches,
 review/failure counts, and missing coverage. Failures count as review cases in

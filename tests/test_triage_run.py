@@ -5,6 +5,7 @@ import io
 import json
 import os
 import sqlite3
+from contextlib import closing
 import subprocess
 import sys
 import tempfile
@@ -52,7 +53,7 @@ class StateTest(unittest.TestCase):
         store.save(self.record, self.result)
         with self.assertRaises(IdempotencyConflict):
             store.save(self.record, replace(self.result, bucket=TriageBucket.DUE))
-        with sqlite3.connect(self.path) as conn:
+        with closing(sqlite3.connect(self.path)) as conn, conn:
             self.assertEqual(conn.execute("SELECT count(*) FROM email_records").fetchone()[0], 1)
             self.assertEqual(conn.execute("SELECT count(*) FROM triage_results").fetchone()[0], 1)
 
@@ -71,14 +72,14 @@ class StateTest(unittest.TestCase):
 
     def test_phase3_ingested_email_is_reused_without_identity_conflict(self):
         migrate(self.path)
-        with sqlite3.connect(self.path) as conn:
+        with closing(sqlite3.connect(self.path)) as conn, conn:
             insert_email_once(conn, self.record)
         store = ResultStore(self.path, account="demo@example.test")
         store.save(self.record, self.result)
         self.assertEqual(store.get(self.record.id), self.result)
 
     def test_version_two_upgrade_preserves_ingested_email(self):
-        with sqlite3.connect(self.path) as conn:
+        with closing(sqlite3.connect(self.path)) as conn, conn:
             for name in ("001_initial.sql", "002_ingestion_outcomes.sql"):
                 conn.executescript((ROOT / "keeper_core/migrations" / name).read_text())
             conn.execute("PRAGMA user_version=2")
@@ -86,7 +87,7 @@ class StateTest(unittest.TestCase):
         store = ResultStore(self.path, account="demo@example.test")
         self.assertIsNone(store.get(self.record.id))
         store.save(self.record, self.result)
-        with sqlite3.connect(self.path) as conn:
+        with closing(sqlite3.connect(self.path)) as conn, conn:
             self.assertEqual(conn.execute("PRAGMA user_version").fetchone()[0], 3)
             self.assertEqual(conn.execute("SELECT count(*) FROM email_records").fetchone()[0], 1)
 
@@ -95,7 +96,7 @@ class StateTest(unittest.TestCase):
             ResultStore(self.path).save(self.record, self.result)
         store = ResultStore(self.path, account="demo@example.test")
         store.save(self.record, self.result)
-        with sqlite3.connect(self.path) as conn:
+        with closing(sqlite3.connect(self.path)) as conn, conn:
             conn.execute("DELETE FROM triage_account")
         with self.assertRaises(IdempotencyConflict):
             store.get(self.record.id)
@@ -106,17 +107,17 @@ class StateTest(unittest.TestCase):
             store.save(self.record, replace(self.result, email_id="gmail:wrong"))
         self.assertFalse(self.path.exists())
         migrate(self.path)
-        with sqlite3.connect(self.path) as conn:
+        with closing(sqlite3.connect(self.path)) as conn, conn:
             conn.execute("CREATE TRIGGER reject_triage BEFORE INSERT ON triage_results BEGIN SELECT RAISE(ABORT,'test'); END")
         with self.assertRaises(sqlite3.IntegrityError):
             store.save(self.record, self.result)
-        with sqlite3.connect(self.path) as conn:
+        with closing(sqlite3.connect(self.path)) as conn, conn:
             self.assertEqual(conn.execute("SELECT count(*) FROM email_records").fetchone()[0], 0)
 
     def test_approved_user_correction_blocks_automatic_replay(self):
         store = ResultStore(self.path, account="demo@example.test")
         store.save(self.record, self.result)
-        with sqlite3.connect(self.path) as conn:
+        with closing(sqlite3.connect(self.path)) as conn, conn:
             conn.execute(
                 "INSERT INTO correction_records(id,target_type,target_id,correction,created_at,approval_status) "
                 "VALUES('correction:1','triage',?,'Keep this','2026-10-27T12:00:00Z','approved')",
@@ -209,7 +210,7 @@ class GmailRunTest(unittest.TestCase):
         self.assertEqual(len([name for name, _ in self.api.calls if name == "messages.modify"]), 3)
         self.assertTrue(all("INBOX" in item["labelIds"] for item in self.api.message_map.values()))
         self.assertTrue(all(name.startswith("KEEPER_") for name in self.api.label_map))
-        with sqlite3.connect(self.path) as conn:
+        with closing(sqlite3.connect(self.path)) as conn, conn:
             self.assertEqual(conn.execute("SELECT count(*) FROM triage_results").fetchone()[0], 3)
 
     def test_label_failure_retains_plan_for_retry_without_model_recall(self):
@@ -313,7 +314,7 @@ class RunCommandTest(unittest.TestCase):
             self.assertEqual(comparison["evaluated"], 75)
             self.assertEqual(comparison["review_count"], 75)
             self.assertFalse(comparison["measured_model_quality"])
-            with sqlite3.connect(path) as conn:
+            with closing(sqlite3.connect(path)) as conn, conn:
                 self.assertEqual(conn.execute("SELECT count(*) FROM triage_results").fetchone()[0], 75)
 
     def test_run_is_dry_by_default_and_save_is_explicit(self):
@@ -325,7 +326,7 @@ class RunCommandTest(unittest.TestCase):
             self.assertFalse(path.exists())
             with contextlib.redirect_stdout(io.StringIO()):
                 self.assertEqual(main(["run", "--db", str(path), "--limit", "2", "--save"]), 0)
-            with sqlite3.connect(path) as conn:
+            with closing(sqlite3.connect(path)) as conn, conn:
                 self.assertEqual(conn.execute("SELECT count(*) FROM triage_results").fetchone()[0], 2)
 
     def test_live_run_rejects_saved_offline_decisions(self):
@@ -351,6 +352,18 @@ class RunCommandTest(unittest.TestCase):
             with contextlib.redirect_stderr(io.StringIO()):
                 self.assertEqual(main(["compare", "--report", str(path)]), 2)
 
+    def test_compare_reads_reports_saved_by_windows_powershell(self):
+        # Windows PowerShell's ">" writes UTF-16 with a byte order mark.
+        with tempfile.TemporaryDirectory() as directory:
+            with contextlib.redirect_stdout(io.StringIO()) as output:
+                self.assertEqual(main(["run", "--db", str(Path(directory) / "absent.db"), "--limit", "1"]), 0)
+            for encoding in ("utf-16", "utf-8-sig", "utf-8"):
+                path = Path(directory) / f"report-{encoding}.json"
+                path.write_text(output.getvalue(), encoding=encoding)
+                with self.subTest(encoding=encoding), contextlib.redirect_stdout(io.StringIO()) as scored:
+                    self.assertEqual(main(["compare", "--report", str(path)]), 0)
+                    self.assertEqual(json.loads(scored.getvalue())["evaluated"], 1)
+
     def test_fixture_rejects_gmail_options_and_database_failure_returns_nonzero(self):
         with contextlib.redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
             main(["run", "--account", "demo@example.test"])
@@ -367,6 +380,7 @@ class RunCommandTest(unittest.TestCase):
                     main(args)
                 model.assert_not_called()
 
+    @unittest.skipIf(os.name == "nt", "runs the bash launcher; WSL or Linux only")
     def test_launcher_dispatches_triage_without_sandbox_dependencies(self):
         with tempfile.TemporaryDirectory() as directory:
             environment = {**os.environ, "KEEPER_APP_DIR": str(ROOT), "KEEPER_PYTHON": sys.executable,

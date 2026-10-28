@@ -48,12 +48,14 @@ class HealthTest(unittest.TestCase):
     def tearDown(self):
         self.temp.cleanup()
 
+    @unittest.skipIf(os.name == "nt", "POSIX file modes; secrets checks run in the Linux sandbox")
     def test_local_check_and_private_key_mode(self):
         check_local("tavily", self.secrets, self.db)
         self.key.chmod(0o644)
         with self.assertRaises(PermissionError):
             check_local("tavily", self.secrets, self.db)
 
+    @unittest.skipIf(os.name == "nt", "POSIX file modes; secrets checks run in the Linux sandbox")
     def test_google_scope_check_and_database_readiness(self):
         token = self.secrets / "google-token.json"
         token.write_text(json.dumps({"scopes": [
@@ -65,6 +67,7 @@ class HealthTest(unittest.TestCase):
         with self.assertRaises(FileNotFoundError):
             check_local("calendar", self.secrets, self.root / "missing.db")
 
+    @unittest.skipIf(os.name == "nt", "POSIX users and file modes; the probe runs in the Linux sandbox")
     def test_gateway_probe_uses_temporary_scoped_writes(self):
         with mock.patch.dict(os.environ, {"KEEPER_HERMES_STATE_DB": str(self.state)}):
             result = check_gateway_access(self.hermes, self.data, secrets_dir=self.secrets,

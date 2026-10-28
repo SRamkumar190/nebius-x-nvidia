@@ -38,7 +38,7 @@ def mime(email, digest):
 
 def seed(service, fixture, manifest_path, account):
     digest = hashlib.sha256(json.dumps(fixture, sort_keys=True).encode()).hexdigest()
-    manifest = json.loads(manifest_path.read_text()) if manifest_path.exists() else {
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.exists() else {
         "version": 1, "account": account, "fixture_sha256": digest, "messages": {}}
     if manifest["account"] != account or manifest["fixture_sha256"] != digest:
         raise ValueError("manifest account or fixture differs")
@@ -113,7 +113,7 @@ def main():
     from googleapiclient.discovery import build
     if args.token.is_symlink() or args.token.stat().st_mode & 0o077:
         raise ValueError("credential must be a private regular file")
-    data = json.loads(args.token.read_text())
+    data = json.loads(args.token.read_text(encoding="utf-8"))
     required = SCOPES["seed" if args.command == "seed" else "reset"]
     if args.command != "ingest" and set(data.get("scopes", [])) != set(required):
         raise ValueError("use a separate credential with exactly the demo operation scope")
@@ -123,9 +123,9 @@ def main():
     fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
     try:
         if args.command == "seed":
-            seed(service, json.loads(args.fixture.read_text()), args.manifest, args.account)
+            seed(service, json.loads(args.fixture.read_text(encoding="utf-8")), args.manifest, args.account)
         elif args.command == "reset":
-            manifest = json.loads(args.manifest.read_text())
+            manifest = json.loads(args.manifest.read_text(encoding="utf-8"))
             if manifest["account"] != args.account:
                 raise ValueError("wrong demo account")
             reset(service, manifest, args.db if args.db.exists() else None)
