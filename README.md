@@ -8,6 +8,7 @@ It runs as a Hermes agent inside NVIDIA OpenShell, set up with NemoClaw. Inferen
 
 - **Phase 1, feasibility:** done. The verdict was go; see [docs/phase1-report.md](docs/phase1-report.md).
 - **Phase 2, the working assistant:** in progress. Items 1 to 3 are done: repo scaffold, model router, and memory and skills ([item 3 report](docs/phase2-item3-report.md)). Next are inbox and calendar triage, the opportunity radar, and the OpenShell network policy.
+- **Phase 4 triage implementation:** saved decisions, verified demo Gmail dry-run/apply, restart-safe label replay, and fixture comparison are implemented. Offline acceptance passes; live provider and sandbox acceptance remain pending. See the [usage guide](triage/README.md) and [acceptance checklist](docs/phase4-triage-report.md).
 
 ## Layout
 

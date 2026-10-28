@@ -170,6 +170,13 @@ class LiveGmail:
         if not isinstance(profile.get("emailAddress"), str) or not profile["emailAddress"]:
             raise InvalidProviderResponse("Gmail profile has no email address")
 
+    def verify_account(self, expected: str) -> None:
+        """Require the operator's disposable demo account before reading its seed."""
+        profile = self._execute(lambda: self._service.users().getProfile(userId="me"))
+        actual = profile.get("emailAddress")
+        if not isinstance(actual, str) or actual.casefold() != expected.casefold():
+            raise AuthenticationError("Authenticated Gmail account does not match the demo account")
+
     def _execute(self, request: Callable[[], object], *, safe_to_retry: bool = True) -> dict:
         for attempt in range(self._max_attempts):
             try:
@@ -332,8 +339,9 @@ class LiveGmail:
                 except (TypeError, ValueError, binascii.Error) as exc:
                     raise InvalidProviderResponse("Gmail draft has invalid raw content") from exc
                 parsed = BytesParser(policy=policy.default).parsebytes(raw)
-                if parsed.get("X-Keeper-Draft-Key") == marker:
-                    if parsed.get("X-Keeper-Draft-Fingerprint") != fingerprint:
+                # MIME folding can leave surrounding whitespace on these long headers.
+                if str(parsed.get("X-Keeper-Draft-Key", "")).strip() == marker:
+                    if str(parsed.get("X-Keeper-Draft-Fingerprint", "")).strip() != fingerprint:
                         raise IdempotencyConflict("draft retry key reused for different content")
                     return draft_id
             cursor = page.get("nextPageToken")
