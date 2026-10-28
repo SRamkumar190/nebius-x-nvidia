@@ -187,11 +187,11 @@ These are initial assignments, **not assertions about unverified individual spec
 3. Detect confirmation emails and move matching opportunities from `found` to `applied`.-
 4. Detect interview invitations and move matching applications to `interview` without creating duplicate application records.-
 5. Detect rejection/offer/decision signals and move matching applications to `decision`, preserving the specific outcome as metadata.-
-6. Prevent backwards or contradictory transitions unless explicitly approved; retain full audit history.
-7. Expose CLI commands to list applications, inspect history, and apply a manual correction.
-8. Build a read-only `/apps` Telegram response backed by the same database, if gateway support permits.
-9. Test repeated email ingestion, out-of-order messages, multiple roles at one company, and ambiguous subject lines.
-10. Provide a deterministic scenario showing a single application moving through multiple states.
+6. Prevent backwards or contradictory transitions unless explicitly approved; retain full audit history.-
+7. Expose CLI commands to list applications, inspect history, and apply a manual correction.-
+8. Build a read-only `/apps` Telegram response backed by the same database, if gateway support permits.-
+9. Test repeated email ingestion, out-of-order messages, multiple roles at one company, and ambiguous subject lines.-
+10. Provide a deterministic scenario showing a single application moving through multiple states.-
 
 **Definition of done:** A confirmation, interview invite, and rejection update one persistent application with an auditable history; reprocessing creates no duplicates.
 

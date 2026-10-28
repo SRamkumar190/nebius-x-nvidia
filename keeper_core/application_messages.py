@@ -9,6 +9,7 @@ from .applications import (
     IdentityResolution, apply_message_transition, resolve_message_application,
 )
 from .contracts import Application, ApplicationStatus, EmailRecord
+from .time import from_storage
 from .workflow import TransitionConflict, normalize_identity
 
 
@@ -122,6 +123,17 @@ def process_application_email(
     found in the message against tracked opportunities. Uncertain signals or
     identity never mutate the application.
     """
+    saved = conn.execute(
+        """SELECT provider, provider_id, sender, subject, received_at, body_excerpt
+           FROM email_records WHERE id = ?""", (email.id,),
+    ).fetchone()
+    if saved is None:
+        return MessageProcessingResult("review", "source email is not stored")
+    if (*saved[:4], from_storage(saved[4]), saved[5]) != (
+        email.provider, email.provider_id, email.sender, email.subject,
+        email.received_at, email.body_excerpt,
+    ):
+        return MessageProcessingResult("review", "stored email differs from supplied source")
     detection = detect_application_signal(email)
     if detection.status == "none":
         return MessageProcessingResult("ignored", detection.reason)

@@ -1,6 +1,8 @@
 import sqlite3
 import tempfile
 import unittest
+from contextlib import closing
+from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -18,8 +20,9 @@ STAMP = "2026-10-26T12:00:00.000000Z"
 class ApplicationEmailTest(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
-        self.conn = sqlite3.connect(Path(self.tmp.name) / "keeper.db")
-        migrate(Path(self.tmp.name) / "keeper.db")
+        self.path = Path(self.tmp.name) / "keeper.db"
+        self.conn = sqlite3.connect(self.path)
+        migrate(self.path)
         self.conn.execute("PRAGMA foreign_keys = ON")
         self.conn.execute(
             """INSERT INTO opportunities
@@ -136,6 +139,63 @@ class ApplicationEmailTest(unittest.TestCase):
         self.assertEqual(process_application_email(self.conn, subject_only).status, "review")
         unknown = self.message(2, "Application received", "Other Co received your application for Software Engineer Intern.")
         self.assertEqual(process_application_email(self.conn, unknown).status, "review")
+        self.assertEqual(get_application(self.conn, self.app.id).status, ApplicationStatus.FOUND)
+
+    def test_repeated_ingestion_and_changed_source_do_not_duplicate_history(self):
+        message = self.message(
+            1, "Application received", "Example Inc received your application for Software Engineer Intern."
+        )
+        self.assertEqual(process_application_email(self.conn, message).status, "updated")
+        self.assertEqual(insert_email_once(self.conn, message), message.id)
+        self.assertEqual(process_application_email(self.conn, message).status, "reused")
+        changed = replace(message, body_excerpt="Example Inc invites you to interview for Software Engineer Intern.")
+        self.assertEqual(process_application_email(self.conn, changed).status, "review")
+        self.assertEqual(self.conn.execute("SELECT count(*) FROM email_records").fetchone()[0], 1)
+        self.assertEqual(len(get_application(self.conn, self.app.id).status_history), 2)
+        self.conn.commit()
+        with closing(sqlite3.connect(self.path)) as restarted:
+            restarted.execute("PRAGMA foreign_keys = ON")
+            self.assertEqual(insert_email_once(restarted, message), message.id)
+            self.assertEqual(process_application_email(restarted, message).status, "reused")
+            self.assertEqual(restarted.execute("SELECT count(*) FROM application_status_changes").fetchone()[0], 2)
+
+    def test_out_of_order_messages_do_not_regress_or_add_history(self):
+        interview = self.message(
+            2, "Interview invitation", "Example Inc invites you to interview for Software Engineer Intern."
+        )
+        confirmation = self.message(
+            1, "Application received", "Example Inc received your application for Software Engineer Intern."
+        )
+        self.assertEqual(process_application_email(self.conn, interview).status, "updated")
+        self.assertEqual(process_application_email(self.conn, confirmation).status, "ignored")
+        app = get_application(self.conn, self.app.id)
+        self.assertEqual(app.status, ApplicationStatus.INTERVIEW)
+        self.assertEqual(len(app.status_history), 2)
+
+    def test_multiple_roles_one_company_and_ambiguous_subject(self):
+        self.conn.execute(
+            """INSERT INTO opportunities
+               (id, dedupe_key, canonical_url, organization, title, source,
+                discovered_at, eligibility)
+               VALUES ('opp:2', 'key:2', 'https://example.test/job/2',
+                       'Example Inc', 'Data Science Intern', 'fixture', ?, 'unverified')""",
+            (STAMP,),
+        )
+        other = create_application(self.conn, "opp:2", created_at=WHEN, source_evidence="Second posting")
+        vague = self.message(
+            1, "Example Inc Software Engineer Intern — interview invitation", "Please check your portal."
+        )
+        self.assertEqual(process_application_email(self.conn, vague).status, "review")
+        both = self.message(
+            2, "Interview invitation", "Example Inc invites you to interview for Software Engineer Intern or Data Science Intern."
+        )
+        self.assertEqual(process_application_email(self.conn, both).status, "review")
+        clear = self.message(
+            3, "Interview invitation", "Example Inc invites you to interview for Data Science Intern."
+        )
+        result = process_application_email(self.conn, clear)
+        self.assertEqual(result.status, "updated")
+        self.assertEqual(result.application.id, other.id)
         self.assertEqual(get_application(self.conn, self.app.id).status, ApplicationStatus.FOUND)
 
 

@@ -21,6 +21,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--db", type=Path, default=default_db_path(), help="Keeper SQLite database")
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("list", help="list tracked applications")
+    sub.add_parser("telegram", help="read-only plain-text summary for the /apps gateway command")
     history = sub.add_parser("history", help="show all evidence and transitions for one application")
     history.add_argument("application_id")
     correct = sub.add_parser("correct", help="apply an explicitly approved manual correction")
@@ -77,6 +78,14 @@ def _history(conn: sqlite3.Connection, app) -> dict:
 
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
+    if args.command == "telegram":
+        from .application_telegram import format_apps_response
+        try:
+            with closing(_read_connection(args.db)) as conn:
+                print(format_apps_response(conn))
+        except (ValueError, sqlite3.Error):
+            print("Application tracker is not ready.")
+        return 0
     try:
         if args.command == "correct":
             if not args.approve:
