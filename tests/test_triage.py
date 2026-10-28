@@ -271,6 +271,31 @@ class TriageBoundaryTest(unittest.TestCase):
                 found = "urgency" in scam_signals(email(sender="news@example.test", body=body), ())
                 self.assertIs(found, urgent)
 
+    def test_far_above_market_hourly_pay_is_a_warning(self):
+        # Seen live: a fake internship at $900 per hour had no scam warning.
+        for body, flagged in [
+            ("Claim a student internship paying $900 per hour with no interview.", True),
+            ("Paid $150/hr for remote data entry.", True),
+            ("Earn $1,200 an hour from home.", True),
+            ("This internship pays $25 per hour.", False),
+            ("Stipend of $45/hr plus housing.", False),
+            ("Pay is $149 per hour.", False),
+            ("Registration costs $900 per team.", False),
+        ]:
+            with self.subTest(body=body):
+                found = "unrealistic_pay" in scam_signals(email(body=body), ())
+                self.assertIs(found, flagged)
+
+    def test_spelled_out_short_limits_count_as_urgency(self):
+        for body, urgent in [
+            ("Act in ten minutes.", True),
+            ("Reply within thirty minutes.", True),
+            ("The office reopens in ten days.", False),
+        ]:
+            with self.subTest(body=body):
+                found = "urgency" in scam_signals(email(sender="news@example.test", body=body), ())
+                self.assertIs(found, urgent)
+
     def test_prompt_asks_for_an_array_of_scam_signals(self):
         model = FakeModel(payload())
         classify_email(email(), model, classified_at=UTC_TIME)
