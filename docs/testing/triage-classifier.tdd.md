@@ -68,3 +68,22 @@ The existing Gmail draft-deduplication failure is outside this contribution.
 Pre-commit dependency audit: pip-audit reported no known vulnerabilities after
 updating only the local virtual environment's packaging tools. This contribution
 adds no application dependencies.
+
+## Push verification follow-up
+
+The configured ECC pre-push hook blocked the upload on the pre-existing Gmail
+draft replay failure. Diagnosis showed MIME header folding preserved a leading
+space on the 64-character Keeper marker and fingerprint headers, so exact
+comparisons missed the existing draft. A separate fix normalizes surrounding
+header whitespace before comparing; it does not change draft creation or sends.
+
+RED: test_folded_draft_headers_survive_adapter_restart reproduced draft-2 instead
+of draft-1 after constructing a new adapter. Checkpoint: ed96c55.
+GREEN: the same test and the original draft test pass after normalization;
+changed content with the same key still raises IdempotencyConflict.
+
+    .venv/bin/python -m unittest tests.test_gmail_live -q
+    7 tests pass.
+
+    .venv/bin/python -m unittest discover -s tests -q
+    All 153 tests pass. The earlier baseline failure is now resolved.

@@ -332,8 +332,9 @@ class LiveGmail:
                 except (TypeError, ValueError, binascii.Error) as exc:
                     raise InvalidProviderResponse("Gmail draft has invalid raw content") from exc
                 parsed = BytesParser(policy=policy.default).parsebytes(raw)
-                if parsed.get("X-Keeper-Draft-Key") == marker:
-                    if parsed.get("X-Keeper-Draft-Fingerprint") != fingerprint:
+                # MIME folding can leave surrounding whitespace on these long headers.
+                if str(parsed.get("X-Keeper-Draft-Key", "")).strip() == marker:
+                    if str(parsed.get("X-Keeper-Draft-Fingerprint", "")).strip() != fingerprint:
                         raise IdempotencyConflict("draft retry key reused for different content")
                     return draft_id
             cursor = page.get("nextPageToken")
