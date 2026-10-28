@@ -1,0 +1,7 @@
+# Radar discovery stage
+
+`keeper_core.radar` loads the private Markdown profile described in [the profile contract](profile.md), builds at most six Tavily queries by default, and requests at most five results per query. Queries use only roles, opportunity types, preferred topics, and one broad location. They omit education and work authorization. User text is reduced to words before it enters a query.
+
+`search_opportunities(profile, tavily, discovered_at=utc_time)` returns the exact queries, normalized `Opportunity` records, and a reason for every skipped hit. It prioritizes known application systems and employer career pages, accepts `.edu` and `.gov` opportunity sources, drops known aggregator and unverified page links, removes URL tracking parameters, and deduplicates by canonical URL and normalized organization/title within the run. A result needs an identifiable role and organization in its title; the radar does not invent either from a URL slug. The `source` field is the canonical URL's host, and the discovery time is the supplied UTC run time.
+
+The current filter skips explicit closed notices, senior roles for a student profile, clear role mismatches, and explicit profile exclusions. Search snippets are not eligibility evidence: every new record remains `unverified`, including snippets that mention citizenship, sponsorship, or clearance. Later eligibility work must verify requirements on the application page. Persistent deduplication across runs remains the responsibility of `insert_opportunity_once` when the radar is wired to SQLite.

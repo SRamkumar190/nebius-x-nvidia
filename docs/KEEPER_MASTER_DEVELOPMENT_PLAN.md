@@ -208,9 +208,9 @@ These are initial assignments, **not assertions about unverified individual spec
 5. Test duplicate deadline emails, shortened deadlines, moved deadlines, and API retry scenarios.-
 6. Draft context-aware replies with Super, including appropriate subject/thread context and concise professional tone.-
 7. Create Gmail drafts through the draft API only; prohibit send operations in adapter interfaces and tests.-
-8. Flag uncertain recruiter identity, missing context, and sensitive details for manual review rather than hallucinating them.
-9. Integrate event and draft links into the triage summary and application history.
-10. Demonstrate that a deadline extension moves the original event and that no draft has been sent.
+8. Flag uncertain recruiter identity, missing context, and sensitive details for manual review rather than hallucinating them.-
+9. Integrate event and draft links into the triage summary and application history.-
+10. Demonstrate that a deadline extension moves the original event and that no draft has been sent.-
 
 **Definition of done:** One email yields a safe unsent draft and a correct calendar event; an extension updates rather than duplicates the event.
 
@@ -220,7 +220,7 @@ These are initial assignments, **not assertions about unverified individual spec
 **Depends on:** Phases 1–2; existing memory  
 **Output:** `keeper radar run` with relevant opportunities
 
-1. Define `profile.md` fields for target roles, graduation year, major, location constraints, work authorization where voluntarily supplied, and opportunity preferences.
+1. Define `profile.md` fields for target roles, graduation year, major, location constraints, work authorization where voluntarily supplied, and opportunity preferences.-
 2. Build bounded Tavily queries from profile fields; prefer primary application URLs and credible sources.
 3. Normalize search results into opportunities with canonical URLs, title, organization, source, and discovery timestamp.
 4. Add heuristic filtering for obvious mismatches, closed/duplicate results, and unsupported eligibility claims.
