@@ -10,6 +10,7 @@ from pathlib import Path
 from integrations.calendar import LiveCalendar
 from keeper_core.adapters import IdempotencyConflict, RateLimited
 from keeper_core.db import migrate
+from keeper_core.deadlines import DeadlineReviewPolicy, DeadlineReviewRequired
 from keeper_core.time import to_storage
 
 
@@ -136,6 +137,18 @@ class CalendarTest(unittest.TestCase):
         self.calendar.check_health()
         self.assertEqual([name for name, _ in self.service.calls], ["list"])
         self.assertEqual(self.service.calls[0][1]["maxResults"], 1)
+
+    def test_past_deadline_is_blocked_before_provider_without_review_policy(self):
+        past = datetime(2026, 10, 30, 12, tzinfo=timezone.utc)
+        with self.assertRaises(DeadlineReviewRequired):
+            self.calendar.create_deadline("deadline:1", past, "Apply", idempotency_key="key:past")
+        self.assertEqual(self.service.calls, [])
+        self.assertIsNone(self.mapping()[1])
+        policy = DeadlineReviewPolicy("candidate:reviewed", "user:1", "Approved historical event",
+                                      self.initial, past, allow_past=True)
+        self.calendar.create_deadline("deadline:1", past, "Apply", idempotency_key="key:past",
+                                      review_policy=policy)
+        self.assertEqual(len(self.service.items), 1)
 
     def test_create_persists_id_then_updates_same_event(self):
         event_id = self.calendar.create_deadline("deadline:1", self.initial, "Apply", idempotency_key="key:1")
