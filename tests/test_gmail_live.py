@@ -215,6 +215,15 @@ class GmailAdapterTest(unittest.TestCase):
         self.assertEqual(len([name for name, _ in self.service.calls if name == "drafts.create"]), 1)
         self.assertEqual(self.waits, [])
 
+    def test_folded_draft_headers_survive_adapter_restart(self):
+        first = self.gmail.create_draft("gmail:1", "Re: Subject 1", "Draft text", idempotency_key="draft-restart")
+        restarted = LiveGmail(self.service, run_id="restart")
+        self.assertEqual(restarted.create_draft(
+            "gmail:1", "Re: Subject 1", "Draft text", idempotency_key="draft-restart"), first)
+        self.assertEqual(len(self.service.draft_map), 1)
+        with self.assertRaises(IdempotencyConflict):
+            restarted.create_draft("gmail:1", "Re: Subject 1", "Changed", idempotency_key="draft-restart")
+
 
 if __name__ == "__main__":
     unittest.main()
