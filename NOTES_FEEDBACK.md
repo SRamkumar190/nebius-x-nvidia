@@ -152,3 +152,10 @@ Asked "what is Nebius Token Factory?" with no context, both models confidently d
     - Fix: the parser turns a comma-separated string into a list (same length limits), the prompt asks for a JSON array with an example, the retry names the validation error (Keeper's own text, never the model's), and the cap is 4,096 tokens. The prompt version is now `triage-v2`.
 
     Token Factory feedback: Nano spends a few hundred tokens reasoning before short JSON answers, and those count against `max_tokens`. A clear note in the model card, plus whether `response_format` with a JSON schema is supported for the Nemotron models, would let us enforce the shape instead of repairing it.
+
+27. The first full live triage run (75 synthetic emails, Nano, prompt triage-v2) scored 60 of 75 against the fixture. Deadlines, newsletters, and scam warnings were close to perfect. Junk was weak (6 of 19), and the misses were consistent rather than random:
+    - The model often answered "career: null" for plain prize and lottery mail. Keeper deliberately refuses to junk anything that might be career mail, so those went to review. The same email text came back with career false in one run and null in another, at temperature 0.
+    - It filed every fake account alert ("your account closes in one hour, verify at this unrelated link") as actionable. For a real inbox that's the worst miss, since it puts a phishing link in the to-do pile.
+    - Prompt triage-v3 spells out what each bucket and the career field mean. The fix is in the prompt and a deterministic urgency pattern; the safety rule is unchanged.
+
+    Token Factory feedback: identical inputs at temperature 0 produced different labels across runs. If that's expected for a reasoning model, saying so in the model card would help people decide how much to rely on a single classification.

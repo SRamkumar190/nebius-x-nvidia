@@ -112,12 +112,19 @@ def _run(args):
     return 1 if result["errors"] else 0
 
 
+def _report_text(data):
+    """Decode a report saved by a shell redirect: UTF-8, or UTF-16 from Windows PowerShell."""
+    if data.startswith((b"\xff\xfe", b"\xfe\xff")):
+        return data.decode("utf-16")
+    return data.decode("utf-8-sig")
+
+
 def _compare(args):
     from .evaluate import compare_results
     try:
         if args.report.stat().st_size > 2_000_000:
             raise ValueError("Report too large")
-        report = json.loads(args.report.read_text(encoding="utf-8"))
+        report = json.loads(_report_text(args.report.read_bytes()))
         result = compare_results(args.fixture, report)
     except (OSError, ValueError, RecursionError) as exc:
         print(f"Comparison failed ({type(exc).__name__}); check fixture and prediction report.", file=sys.stderr)

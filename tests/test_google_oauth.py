@@ -71,6 +71,7 @@ class GoogleAuthorizationTest(unittest.TestCase):
             self.assertNotIn(token["token"], result.stdout + result.stderr)
             self.assertIn("refresh_token", result.stderr)
 
+    @unittest.skipIf(os.name == "nt", "runs a bash installer; WSL or Linux only")
     def test_installer_stages_private_copy_and_preserves_other_secrets(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

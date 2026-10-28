@@ -1,4 +1,5 @@
 import contextlib
+from contextlib import closing
 import io
 import os
 import sqlite3
@@ -235,7 +236,7 @@ class PromptCheckTest(unittest.TestCase):
         self.assertIn("Your name is Keeper", view["load_soul_md"])
 
     def test_report_flags_invisible_characters_and_html(self):
-        self.soul.write_text("## Keeper\n\nhi​\n<!-- x -->\n")
+        self.soul.write_text("## Keeper\n\nhi​\n<!-- x -->\n", encoding="utf-8")
         report = "\n".join(promptcheck.file_report(self.soul))
         self.assertIn("U+200B", report)
         self.assertIn("on line 3", report)
@@ -244,7 +245,8 @@ class PromptCheckTest(unittest.TestCase):
     def test_run_says_when_the_chat_is_older_than_the_persona(self):
         self.soul.write_text(merge_keeper_section("", KEEPER))
         os.utime(self.soul, (5000, 5000))  # SOUL.md changed after the chat started (1000)
-        sqlite3.connect(self.db).execute("UPDATE system_prompts SET prompt = 'You are Hermes Agent.'").connection.commit()
+        with closing(sqlite3.connect(self.db)) as conn, conn:
+            conn.execute("UPDATE system_prompts SET prompt = 'You are Hermes Agent.'")
         out = io.StringIO()
         with contextlib.redirect_stdout(out):
             promptcheck.run()

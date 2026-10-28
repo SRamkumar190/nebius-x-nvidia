@@ -33,7 +33,7 @@ class DemoInboxTest(unittest.TestCase):
                 self.assertIsNone(gold["application_transition"])
 
     def test_versioned_fixture_matches_generator_and_coverage(self):
-        fixture = json.loads((Path(__file__).resolve().parents[1] / "demo/fixtures/inbox_75.json").read_text())
+        fixture = json.loads((Path(__file__).resolve().parents[1] / "demo/fixtures/inbox_75.json").read_text(encoding="utf-8"))
         self.assertEqual(fixture, build())
         emails = fixture["emails"]
         self.assertEqual(len(emails), 75)

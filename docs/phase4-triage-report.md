@@ -72,6 +72,19 @@ strict parser rejected, and one email likely ran out of tokens while reasoning.
 Prompt triage-v2 asks for a JSON array and names the failed check on retry, the
 parser accepts the string form, and max_tokens is 4096. See NOTES_FEEDBACK.md note 26.
 
+## First full live run (triage-v2)
+
+All 75 fixture emails, Nano, dry run on Windows: 60 of 75 correct (80%), 10 in review,
+0 failures, 0 career emails sent to junk. Due 19/19 with all 19 deadlines exact, newsletter
+18/18, actionable 17/19, junk 6/19. Scam warnings: 18 of 19 caught, no false positives.
+
+The junk misses had two causes. Eight prize, lottery, and promotion emails got junk with
+career null, so the career guard sent them to review; identical texts went both ways.
+All five fake account alerts went to actionable instead of junk. Prompt triage-v3 defines
+phishing as junk, career as false for non-career mail, and application receipts as
+actionable, and the deterministic urgency check now catches short time limits such as
+"closes in one hour". The career guard itself is unchanged. Rerun the comparison to measure v3.
+
 ## Live acceptance for the teammate
 
 Use triage/README.md's exact commands, with a disposable seeded Gmail account,
