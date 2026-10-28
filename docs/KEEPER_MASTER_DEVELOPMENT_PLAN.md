@@ -163,18 +163,18 @@ These are initial assignments, **not assertions about unverified individual spec
 **Depends on:** Phases 1 and 3; existing router  
 **Output:** `keeper triage run` core classifier
 
-1. Implement a constrained Nano classification prompt returning validated structured fields and a one-sentence reason.
-2. Add robust parsing, schema checks, explicit `unknown`/review fallback, and retry behavior for malformed model outputs.
-3. Implement deterministic career keyword/sender checks **after** model classification; override any career-related junk decision to a reviewable bucket.
-4. Implement scam signal checks and distinguish `flagged` from `proven scam`; retain explanations and source evidence.
-5. Parse candidate dates and deadlines with timezone awareness; represent ambiguous dates as needing confirmation.
-6. Map triage results to safe Gmail labels and a persistent result table; avoid destructive archive/delete behavior.
-7. Preserve model request metadata and router logs; do not treat confidence scores as calibrated probabilities.
-8. Add fixture-based unit tests for all buckets, career override, scam signals, missing dates, and prompt-injection-like content.
-9. Add a dry-run command showing proposed changes without Gmail mutations, followed by explicit apply mode.
-10. Run the seeded inbox and compare actual versus expected labels; record all misses for the eval owner.
+1. Implement a constrained Nano classification prompt returning validated structured fields and a one-sentence reason.-
+2. Add robust parsing, schema checks, explicit `unknown`/review fallback, and retry behavior for malformed model outputs.-
+3. Implement deterministic career keyword/sender checks **after** model classification; override any career-related junk decision to a reviewable bucket.-
+4. Implement scam signal checks and distinguish `flagged` from `proven scam`; retain explanations and source evidence.-
+5. Parse candidate dates and deadlines with timezone awareness; represent ambiguous dates as needing confirmation.-
+6. Map triage results to safe Gmail labels and a persistent result table; avoid destructive archive/delete behavior.-
+7. Preserve model request metadata and router logs; do not treat confidence scores as calibrated probabilities.-
+8. Add fixture-based unit tests for all buckets, career override, scam signals, missing dates, and prompt-injection-like content.-
+9. Add a dry-run command showing proposed changes without Gmail mutations, followed by explicit apply mode.-
+10. Run the seeded inbox and compare actual versus expected labels; record all misses for the eval owner.-
 
-**Definition of done:** Full inbox processes reliably; career mail is never sent to junk by Keeper; reasons and scam flags are visible; replay is idempotent.
+**Definition of done:** Full inbox processes reliably; career mail is never sent to junk by Keeper; reasons and scam flags are visible; replay is idempotent.-
 
 ## PHASE 5 — APPLICATION TRACKER AND EMAIL-DRIVEN STATE MACHINE
 
